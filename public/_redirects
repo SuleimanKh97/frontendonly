@@ -1,0 +1,10 @@
+/quizzes    /index.html   200
+/quiz/*     /index.html   200
+/quiz-results    /index.html   200
+/my-attempts    /index.html   200
+/books    /index.html   200
+/authors    /index.html   200
+/categories    /index.html   200
+/contact    /index.html   200
+/register    /index.html   200
+/*    /index.html   200
