@@ -1,29 +1,29 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5035/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://backonly-wuoe.onrender.com/api';
 
 // Debug: Log the API base URL
 console.log('🔧 API Base URL:', API_BASE_URL);
 console.log('🔧 Environment Variable:', import.meta.env.VITE_API_BASE_URL);
 
-// Helper: Fix image URLs to use LocalTunnel instead of localhost
+// Helper: Fix image URLs to use Render URL instead of localhost
 function fixImageUrl(imageUrl) {
     if (!imageUrl) return imageUrl;
     
-    // Get current tunnel URL
-    const tunnelUrl = API_BASE_URL.replace('/api', '');
+    // Get current API base URL without /api
+    const baseUrl = API_BASE_URL.replace('/api', '');
     
-    // Replace localhost:5035 with current LocalTunnel URL
+    // Replace localhost:5035 with current Render URL
     if (imageUrl.includes('localhost:5035')) {
-        const fixedUrl = imageUrl.replace('http://localhost:5035', tunnelUrl);
+        const fixedUrl = imageUrl.replace('http://localhost:5035', baseUrl);
         console.log('🔧 Fixed localhost image URL:', { original: imageUrl, fixed: fixedUrl });
         return fixedUrl;
     }
     
-    // If it's already a LocalTunnel URL but wrong subdomain, fix it
+    // If it's a LocalTunnel URL, replace with Render URL
     if (imageUrl.includes('loca.lt')) {
         const path = imageUrl.split('/uploads/')[1];
         if (path) {
-            const fixedUrl = `${tunnelUrl}/uploads/${path}`;
+            const fixedUrl = `${baseUrl}/uploads/${path}`;
             console.log('🔧 Fixed LocalTunnel image URL:', { original: imageUrl, fixed: fixedUrl });
             return fixedUrl;
         }
@@ -31,7 +31,7 @@ function fixImageUrl(imageUrl) {
     
     // If it's a relative path, make it absolute
     if (imageUrl.startsWith('/uploads/')) {
-        const fixedUrl = `${tunnelUrl}${imageUrl}`;
+        const fixedUrl = `${baseUrl}${imageUrl}`;
         console.log('🔧 Fixed relative image URL:', { original: imageUrl, fixed: fixedUrl });
         return fixedUrl;
     }
@@ -189,7 +189,7 @@ async function testImageUrl(url) {
 
 // Helper: Get best available image URL
 async function getBestImageUrl(book) {
-    const tunnelUrl = API_BASE_URL.replace('/api', '');
+    const baseUrl = API_BASE_URL.replace('/api', '');
     
     // Try coverImageUrl first
     if (book.coverImageUrl) {
@@ -221,18 +221,27 @@ class ApiService {
   // Helper method to get auth headers
   getAuthHeaders() {
     const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+    const headers = {
+      'Content-Type': 'application/json'
     };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
   }
 
   // Helper method to get auth headers for file uploads
   getAuthHeadersForUpload() {
     const token = localStorage.getItem('token');
-    return {
-      ...(token && { 'Authorization': `Bearer ${token}` })
-    };
+    const headers = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
   }
 
   // Upload image method
