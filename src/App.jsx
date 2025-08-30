@@ -12,6 +12,7 @@ import Header from './components/Header.jsx'
 import Hero from './components/Hero.jsx'
 import Footer from './components/Footer.jsx'
 import BooksPage from './pages/BooksPage.jsx'
+import ProductsPage from './pages/ProductsPage.jsx'
 import AuthorsPage from './pages/AuthorsPage.jsx'
 import CategoriesPage from './pages/CategoriesPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
@@ -535,6 +536,15 @@ ${customerData.customerName}`
               onWhatsAppInquiry={handleWhatsAppInquiry}
               initialCategory={selectedCategoryForBooks}
               initialAuthor={selectedAuthorForBooks}
+            />
+            <Footer />
+          </>
+        } />
+        
+        <Route path="/products" element={
+          <>
+            <ProductsPage 
+              onBack={handleBackToHome}
             />
             <Footer />
           </>

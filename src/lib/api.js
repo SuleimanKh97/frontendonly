@@ -453,6 +453,54 @@ class ApiService {
     });
   }
 
+  // Admin Methods - Products
+  async getProducts(filters = {}) {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
+        queryParams.append(key, filters[key]);
+      }
+    });
+    
+    return await this.apiCall(`/Products?${queryParams.toString()}`);
+  }
+
+  async getProductById(id) {
+    return await this.apiCall(`/Products/${id}`);
+  }
+
+  async createProduct(productData) {
+    return await this.apiCall('/Products', {
+      method: 'POST',
+      body: JSON.stringify(productData)
+    });
+  }
+
+  async updateProduct(id, productData) {
+    return await this.apiCall(`/Products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData)
+    });
+  }
+
+  async deleteProduct(id) {
+    return await this.apiCall(`/Products/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getProductTypes() {
+    return await this.apiCall('/Products/types');
+  }
+
+  async getGrades() {
+    return await this.apiCall('/Products/grades');
+  }
+
+  async getSubjects() {
+    return await this.apiCall('/Products/subjects');
+  }
+
   // Admin Methods - Authors
   async createAuthor(authorData) {
     return await this.apiCall('/Authors', {
@@ -744,6 +792,9 @@ class ApiService {
 
 // Create and export a singleton instance
 const apiService = new ApiService();
+
+// Add fixImageUrl as a method to the apiService instance
+apiService.fixImageUrl = fixImageUrl;
 
 export { apiService as default, fixImageUrl, testImageUrl, getBestImageUrl };
 

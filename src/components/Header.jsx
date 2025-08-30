@@ -12,7 +12,8 @@ import {
   User, 
   LogOut, 
   Settings,
-  Shield
+  Shield,
+  Package
 } from 'lucide-react';
 
 const Header = ({ currentUser, onLogout, onOpenAdmin }) => {
@@ -24,6 +25,7 @@ const Header = ({ currentUser, onLogout, onOpenAdmin }) => {
     { name: 'الرئيسية', href: '/', icon: BookOpen },
     { name: 'كويزاتك', href: '/quizzes', icon: Circle },
     { name: 'سوق الطلاب', href: '/books', icon: Book },
+    { name: 'المنتجات', href: '/products', icon: Package },
     { name: 'دليل النجاح', href: '/success-guide', icon: Award },
     { name: 'نصائح وإرشادات', href: '/study-tips', icon: Lightbulb },
     { name: 'الرزنامة الطلابية', href: '/calendar', icon: Calendar },

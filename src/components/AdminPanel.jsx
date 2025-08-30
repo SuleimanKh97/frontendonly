@@ -28,13 +28,15 @@ import {
   Phone,
   Mail,
   User,
-  X
+  X,
+  Package
 } from 'lucide-react'
 import apiService from '../lib/api.js'
 
 // Import admin components
 import Dashboard from './admin/Dashboard.jsx'
 import BooksManagement from './admin/BooksManagement.jsx'
+import ProductsManagement from './admin/ProductsManagement.jsx'
 import AuthorsManagement from './admin/AuthorsManagement.jsx'
 import CategoriesManagement from './admin/CategoriesManagement.jsx'
 import PublishersManagement from './admin/PublishersManagement.jsx'
@@ -162,8 +164,9 @@ export default function AdminPanel({ currentUser, onClose }) {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9 gap-1">
             <TabsTrigger value="dashboard">لوحة المعلومات</TabsTrigger>
+            <TabsTrigger value="products">المنتجات</TabsTrigger>
             <TabsTrigger value="books">الكتب</TabsTrigger>
             <TabsTrigger value="authors">المؤلفون</TabsTrigger>
             <TabsTrigger value="categories">التصنيفات</TabsTrigger>
@@ -175,6 +178,10 @@ export default function AdminPanel({ currentUser, onClose }) {
 
           <TabsContent value="dashboard" className="space-y-6">
             <Dashboard />
+          </TabsContent>
+
+          <TabsContent value="products" className="space-y-6">
+            <ProductsManagement />
           </TabsContent>
 
           <TabsContent value="books" className="space-y-6">

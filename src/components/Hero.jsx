@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { BookOpen, Circle, Book, Calendar } from 'lucide-react';
+import { BookOpen, Circle, Book, Calendar, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Hero = () => {
@@ -47,7 +47,7 @@ const Hero = () => {
               >
                 ابدأ رحلتك التعليمية
               </Button>
-              <Link to="/books">
+              <Link to="/products">
                 <Button 
                   size="lg"
                   variant="outline"
@@ -73,7 +73,18 @@ const Hero = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Link to="/products" className="group relative">
+              <div className="bg-black/30 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden border border-[#EDB413]/30">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#EDB413]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="w-16 h-16 bg-[#EDB413] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all duration-300 shadow-lg relative z-10">
+                  <Package className="w-8 h-8 text-black" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3 relative z-10">المنتجات</h3>
+                <p className="text-white/70 leading-relaxed relative z-10">كتب وقرطاسية ومواد تعليمية</p>
+              </div>
+            </Link>
+            
             <Link to="/books" className="group relative">
               <div className="bg-black/30 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden border border-[#EDB413]/30">
                 <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#EDB413]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
