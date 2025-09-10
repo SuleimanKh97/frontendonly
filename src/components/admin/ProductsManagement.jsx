@@ -404,6 +404,7 @@ const ProductsManagement = () => {
         }
 
         const uploadResult = await uploadResponse.json();
+        console.log('Upload result:', uploadResult);
 
         // Add to uploaded images
         uploadedImages.push({
@@ -507,6 +508,11 @@ const ProductsManagement = () => {
                             src={image.imageUrl}
                             alt={`صورة ${index + 1}`}
                             className="w-full h-24 object-cover rounded-lg border"
+                            onError={(e) => {
+                              console.error('Image failed to load:', image.imageUrl);
+                              e.target.src = 'https://via.placeholder.com/150x100/f0f0f0/666?text=Image+Error';
+                            }}
+                            onLoad={() => console.log('Image loaded successfully:', image.imageUrl)}
                           />
                           <button
                             onClick={() => removeImage(index)}
