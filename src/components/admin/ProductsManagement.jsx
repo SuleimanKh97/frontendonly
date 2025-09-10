@@ -95,6 +95,8 @@ const ProductsManagement = () => {
       if (apiFilters.category === 'all') delete apiFilters.category;
 
       const response = await apiService.getProducts(apiFilters);
+      console.log('🔄 Refreshing products after update:', response?.length || 0, 'products');
+      console.log('🔄 First product:', response?.[0]);
       setProducts(response || []);
 
       // Check for missing images in loaded products
@@ -345,6 +347,7 @@ const ProductsManagement = () => {
         stockQuantity: safeParseInt(formData.stockQuantity) || 0,
         coverImageUrl: formData.coverImageUrl || null,
         images: formData.images.map((img, index) => ({
+          id: img.id, // Include the ID for existing images
           imageUrl: img.imageUrl,
           imageType: img.imageType || 'Gallery',
           displayOrder: index,
@@ -409,6 +412,7 @@ const ProductsManagement = () => {
         stockQuantity: safeParseInt(formData.stockQuantity) || 0,
         coverImageUrl: formData.coverImageUrl || null,
         images: formData.images.map((img, index) => ({
+          id: img.id, // Include the ID for existing images
           imageUrl: img.imageUrl,
           imageType: img.imageType || 'Gallery',
           displayOrder: index,
@@ -426,9 +430,13 @@ const ProductsManagement = () => {
       console.log('🔄 TitleArabic:', productData.titleArabic);
       console.log('🔄 Images count:', productData.images?.length || 0);
 
+      // Debug: Log image IDs to see if they're included
+      console.log('🔄 Images with IDs:', productData.images.map(img => ({ id: img.id, url: img.imageUrl })));
+
       const result = await apiService.updateProduct(editingProduct.id, productData);
 
       showSuccess('تم تحديث المنتج بنجاح');
+      console.log('✅ Update successful, closing dialog and refreshing...');
 
       // Close the dialog and reset state
       setShowCreateDialog(false);
@@ -1456,3 +1464,4 @@ const ProductsManagement = () => {
 };
 
 export default ProductsManagement;
+
