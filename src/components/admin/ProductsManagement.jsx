@@ -508,6 +508,7 @@ const ProductsManagement = () => {
       isFeatured: product.isFeatured !== undefined ? product.isFeatured : false,
       isNewRelease: product.isNewRelease !== undefined ? product.isNewRelease : false
     });
+    setShowCreateDialog(true); // Open the dialog for editing
   };
 
   const getProductTypeIcon = (type) => {
@@ -662,17 +663,27 @@ const ProductsManagement = () => {
             )}
             فحص الصور المفقودة
           </Button>
+          <Button
+            onClick={() => {
+              setEditingProduct(null);
+              resetForm();
+              setShowCreateDialog(true);
+            }}
+            className="bg-royal-gold hover:bg-yellow-500 text-royal-black"
+          >
+            <Plus className="w-4 h-4 ml-2" />
+            إضافة منتج جديد
+          </Button>
+
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-royal-gold hover:bg-yellow-500 text-royal-black">
-                <Plus className="w-4 h-4 ml-2" />
-                إضافة منتج جديد
-              </Button>
-            </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>إضافة منتج جديد</DialogTitle>
-              <DialogDescription>أدخل تفاصيل المنتج</DialogDescription>
+              <DialogTitle>
+                {editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingProduct ? 'قم بتعديل تفاصيل المنتج' : 'أدخل تفاصيل المنتج'}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
               {/* Images Upload - TOP SECTION */}
