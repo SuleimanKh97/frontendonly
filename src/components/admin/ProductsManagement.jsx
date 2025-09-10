@@ -420,8 +420,12 @@ const ProductsManagement = () => {
       };
 
 
-      await apiService.updateProduct(editingProduct.id, productData);
+      const result = await apiService.updateProduct(editingProduct.id, productData);
+
       showSuccess('تم تحديث المنتج بنجاح');
+
+      // Close the dialog and reset state
+      setShowCreateDialog(false);
       setEditingProduct(null);
       resetForm();
       loadProducts();
