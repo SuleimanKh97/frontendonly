@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Search, 
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Search,
   Filter,
   BookOpen,
   PenTool,
@@ -20,7 +20,9 @@ import {
   Package,
   Star,
   Eye,
-  ShoppingCart
+  ShoppingCart,
+  Upload,
+  X
 } from 'lucide-react';
 import apiService, { fixImageUrl } from '@/lib/api.js';
 import { showSuccess, showError, showWarning } from '@/lib/sweetAlert.js';
@@ -62,6 +64,7 @@ const ProductsManagement = () => {
     originalPrice: null,
     stockQuantity: 0,
     coverImageUrl: '',
+    images: [], // Array of product images
     isAvailable: true,
     isFeatured: false,
     isNewRelease: false
@@ -184,6 +187,12 @@ const ProductsManagement = () => {
         originalPrice: safeParseFloat(formData.originalPrice),
         stockQuantity: safeParseInt(formData.stockQuantity) || 0,
         coverImageUrl: formData.coverImageUrl || null,
+        images: formData.images.map((img, index) => ({
+          imageUrl: img.imageUrl,
+          imageType: img.imageType || 'Gallery',
+          displayOrder: index,
+          isActive: img.isActive !== undefined ? img.isActive : true
+        })),
         isAvailable: formData.isAvailable !== undefined ? formData.isAvailable : true,
         isFeatured: formData.isFeatured !== undefined ? formData.isFeatured : false,
         isNewRelease: formData.isNewRelease !== undefined ? formData.isNewRelease : false
@@ -243,6 +252,12 @@ const ProductsManagement = () => {
         originalPrice: safeParseFloat(formData.originalPrice),
         stockQuantity: safeParseInt(formData.stockQuantity) || 0,
         coverImageUrl: formData.coverImageUrl || null,
+        images: formData.images.map((img, index) => ({
+          imageUrl: img.imageUrl,
+          imageType: img.imageType || 'Gallery',
+          displayOrder: index,
+          isActive: img.isActive !== undefined ? img.isActive : true
+        })),
         isAvailable: formData.isAvailable !== undefined ? formData.isAvailable : true,
         isFeatured: formData.isFeatured !== undefined ? formData.isFeatured : false,
         isNewRelease: formData.isNewRelease !== undefined ? formData.isNewRelease : false
@@ -299,6 +314,7 @@ const ProductsManagement = () => {
       originalPrice: null,
       stockQuantity: 0,
       coverImageUrl: '',
+      images: [],
       isAvailable: true,
       isFeatured: false,
       isNewRelease: false
@@ -326,6 +342,13 @@ const ProductsManagement = () => {
       originalPrice: product.originalPrice || null,
       stockQuantity: product.stockQuantity || 0,
       coverImageUrl: product.coverImageUrl || '',
+      images: product.productImages ? product.productImages.map(img => ({
+        id: img.id,
+        imageUrl: img.imageUrl,
+        imageType: img.imageType,
+        displayOrder: img.displayOrder,
+        isActive: img.isActive
+      })) : [],
       isAvailable: product.isAvailable !== undefined ? product.isAvailable : true,
       isFeatured: product.isFeatured !== undefined ? product.isFeatured : false,
       isNewRelease: product.isNewRelease !== undefined ? product.isNewRelease : false
@@ -341,6 +364,85 @@ const ProductsManagement = () => {
       case 'Educational': return <BookOpen className="w-4 h-4" />;
       default: return <Package className="w-4 h-4" />;
     }
+  };
+
+  // Image handling functions
+  const handleImageUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    try {
+      const uploadedImages = [];
+
+      for (const file of files) {
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          showError(`نوع الملف غير مدعوم: ${file.name}`);
+          continue;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          showError(`حجم الملف كبير جداً: ${file.name}`);
+          continue;
+        }
+
+        // Create FormData for upload
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        // Upload image
+        const uploadResponse = await fetch(`${apiService.baseURL}/Products/upload-image`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formDataUpload
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`فشل في رفع الصورة: ${file.name}`);
+        }
+
+        const uploadResult = await uploadResponse.json();
+
+        // Add to uploaded images
+        uploadedImages.push({
+          imageUrl: uploadResult.imageUrl,
+          imageType: 'Gallery',
+          displayOrder: formData.images.length + uploadedImages.length,
+          isActive: true
+        });
+      }
+
+      // Update form data with new images
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...uploadedImages]
+      }));
+
+      if (uploadedImages.length > 0) {
+        showSuccess(`تم رفع ${uploadedImages.length} صورة بنجاح`);
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      showError('فشل في رفع الصور');
+    }
+  };
+
+  const removeImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const setCoverImage = (imageUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      coverImageUrl: imageUrl
+    }));
   };
 
   const getProductTypeLabel = (type) => {
@@ -717,6 +819,126 @@ const ProductsManagement = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+              </div>
+
+              {/* Images Upload */}
+              <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-6 rounded-2xl">
+                <h3 className="text-2xl font-bold text-pink-900 mb-6 flex items-center">
+                  📸 صور المنتج
+                </h3>
+
+                {/* Cover Image Selection */}
+                {formData.images.length > 0 && (
+                  <div className="mb-6">
+                    <Label className="flex items-center gap-2 text-lg font-bold text-pink-800 mb-4">
+                      🖼️ صورة الغلاف
+                    </Label>
+                    <div className="flex gap-4 overflow-x-auto pb-4">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative flex-shrink-0">
+                          <img
+                            src={image.imageUrl}
+                            alt={`Product image ${index + 1}`}
+                            className={`w-32 h-32 object-cover rounded-xl border-4 cursor-pointer ${
+                              formData.coverImageUrl === image.imageUrl
+                                ? 'border-pink-500 shadow-lg'
+                                : 'border-gray-300 hover:border-pink-400'
+                            }`}
+                            onClick={() => setCoverImage(image.imageUrl)}
+                          />
+                          {formData.coverImageUrl === image.imageUrl && (
+                            <div className="absolute -top-2 -right-2 bg-pink-500 text-white rounded-full p-1">
+                              <Star className="w-4 h-4 fill-current" />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {formData.coverImageUrl && (
+                      <p className="text-sm text-pink-700 mt-2">
+                        ✅ تم تعيين صورة الغلاف
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Gallery Images */}
+                <div className="space-y-4">
+                  <Label className="flex items-center gap-2 text-lg font-bold text-pink-800">
+                    🖼️ معرض الصور
+                  </Label>
+
+                  {/* Upload Button */}
+                  <div className="border-2 border-dashed border-pink-300 rounded-xl p-8 text-center bg-pink-50 hover:bg-pink-100 transition-colors">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label
+                      htmlFor="image-upload"
+                      className="cursor-pointer flex flex-col items-center gap-4"
+                    >
+                      <div className="w-16 h-16 bg-pink-200 rounded-full flex items-center justify-center">
+                        📤
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-pink-800">
+                          اضغط لاختيار الصور
+                        </p>
+                        <p className="text-sm text-pink-600">
+                          أو اسحب وأفلت الصور هنا
+                        </p>
+                        <p className="text-xs text-pink-500 mt-2">
+                          PNG, JPG, GIF, WebP - حد أقصى 5MB لكل صورة
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Uploaded Images Grid */}
+                  {formData.images.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image.imageUrl}
+                            alt={`Product image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-xl border-2 border-pink-200"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-xl flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                          <div className="absolute top-2 right-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-full">
+                            {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {formData.images.length === 0 && (
+                    <div className="text-center py-8 text-pink-600">
+                      📷 لم يتم رفع أي صور بعد
+                    </div>
+                  )}
                 </div>
               </div>
 
