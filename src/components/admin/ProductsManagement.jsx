@@ -28,7 +28,6 @@ import apiService, { fixImageUrl } from '@/lib/api.js';
 import { showSuccess, showError, showWarning } from '@/lib/sweetAlert.js';
 
 const ProductsManagement = () => {
-  console.log('🛒 ProductsManagement component loaded');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -199,7 +198,6 @@ const ProductsManagement = () => {
         isNewRelease: formData.isNewRelease !== undefined ? formData.isNewRelease : false
       };
 
-      console.log('Sending product data:', productData);
 
       await apiService.createProduct(productData);
       showSuccess('تم إنشاء المنتج بنجاح');
@@ -264,7 +262,6 @@ const ProductsManagement = () => {
         isNewRelease: formData.isNewRelease !== undefined ? formData.isNewRelease : false
       };
 
-      console.log('Updating product data:', productData);
 
       await apiService.updateProduct(editingProduct.id, productData);
       showSuccess('تم تحديث المنتج بنجاح');
@@ -370,7 +367,6 @@ const ProductsManagement = () => {
   // Image handling functions
   const handleImageUpload = async (event) => {
     const files = Array.from(event.target.files);
-    console.log('📸 Image upload triggered with files:', files);
     if (files.length === 0) return;
 
     try {
@@ -470,150 +466,59 @@ const ProductsManagement = () => {
           <h1 className="text-3xl font-bold text-royal-black">إدارة المنتجات</h1>
           <p className="text-royal-black/60">إدارة الكتب والقرطاسية والمواد التعليمية</p>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={(open) => {
-          console.log('📝 Dialog open state changed:', open);
-          setShowCreateDialog(open);
-        }}>
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="bg-royal-gold hover:bg-yellow-500 text-royal-black">
               <Plus className="w-4 h-4 ml-2" />
               إضافة منتج جديد
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
-            {/* Debug: Check if component is rendering */}
-            {console.log('🎯 Dialog content rendering, images array:', formData.images)}
+            <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>إضافة منتج جديد</DialogTitle>
               <DialogDescription>أدخل تفاصيل المنتج</DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-              {/* DEBUG: This should be visible */}
-              <div style={{background: 'red', color: 'white', padding: '10px', margin: '10px 0', border: '2px solid black'}}>
-                🔴 DEBUG: Image Upload Section Should Be Here
-              </div>
-
-              {/* Images Upload - Moved to top for visibility */}
-              <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-6 rounded-2xl border-4 border-pink-300" style={{border: '6px solid #ec4899', background: '#fdf2f8'}}>
-                <div className="bg-pink-200 text-pink-800 px-4 py-2 rounded-lg mb-4 text-center font-bold">
-                  🎯 يمكنك رفع الصور أولاً ثم إدخال باقي التفاصيل
+              {/* Images Upload - TOP SECTION */}
+              <div className="bg-red-100 border-4 border-red-500 p-6 rounded-2xl">
+                <h3 className="text-2xl font-bold text-red-900 mb-4">🖼️ صور المنتج</h3>
+                <div className="text-center p-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload-simple"
+                  />
+                  <label htmlFor="image-upload-simple" className="cursor-pointer">
+                    <div className="text-6xl mb-4">📤</div>
+                    <div className="text-xl font-bold text-gray-700 mb-2">اضغط هنا لاختيار الصور</div>
+                    <div className="text-sm text-gray-500">أو اسحب وأفلت الصور</div>
+                  </label>
                 </div>
-                <h3 className="text-2xl font-bold text-pink-900 mb-6 flex items-center">
-                  📸 صور المنتج
-                </h3>
-
-                {/* Cover Image Selection */}
-                {formData.images.length > 0 && (
-                  <div className="mb-6">
-                    <Label className="flex items-center gap-2 text-lg font-bold text-pink-800 mb-4">
-                      🖼️ صورة الغلاف
-                    </Label>
-                    <div className="flex gap-4 overflow-x-auto pb-4">
+                {formData.images && formData.images.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-lg font-bold mb-4">الصور المختارة ({formData.images.length})</h4>
+                    <div className="grid grid-cols-3 gap-4">
                       {formData.images.map((image, index) => (
-                        <div key={index} className="relative flex-shrink-0">
+                        <div key={index} className="relative">
                           <img
                             src={image.imageUrl}
-                            alt={`Product image ${index + 1}`}
-                            className={`w-32 h-32 object-cover rounded-xl border-4 cursor-pointer ${
-                              formData.coverImageUrl === image.imageUrl
-                                ? 'border-pink-500 shadow-lg'
-                                : 'border-gray-300 hover:border-pink-400'
-                            }`}
-                            onClick={() => setCoverImage(image.imageUrl)}
+                            alt={`صورة ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border"
                           />
-                          {formData.coverImageUrl === image.imageUrl && (
-                            <div className="absolute -top-2 -right-2 bg-pink-500 text-white rounded-full p-1">
-                              <Star className="w-4 h-4 fill-current" />
-                            </div>
-                          )}
                           <button
-                            type="button"
                             onClick={() => removeImage(index)}
-                            className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
                           >
                             ✕
                           </button>
                         </div>
                       ))}
                     </div>
-                    {formData.coverImageUrl && (
-                      <p className="text-sm text-pink-700 mt-2">
-                        ✅ تم تعيين صورة الغلاف
-                      </p>
-                    )}
                   </div>
                 )}
-
-                {/* Gallery Images */}
-                <div className="space-y-4">
-                  <Label className="flex items-center gap-2 text-lg font-bold text-pink-800">
-                    🖼️ معرض الصور
-                  </Label>
-
-                  {/* Upload Button */}
-                  <div className="border-4 border-dashed border-pink-400 rounded-xl p-8 text-center bg-pink-50 hover:bg-pink-100 transition-colors shadow-lg">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    <label
-                      htmlFor="image-upload"
-                      className="cursor-pointer flex flex-col items-center gap-4"
-                    >
-                      <div className="w-16 h-16 bg-pink-200 rounded-full flex items-center justify-center">
-                        📤
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold text-pink-800">
-                          اضغط لاختيار الصور
-                        </p>
-                        <p className="text-sm text-pink-600">
-                          أو اسحب وأفلت الصور هنا
-                        </p>
-                        <p className="text-xs text-pink-500 mt-2">
-                          PNG, JPG, GIF, WebP - حد أقصى 5MB لكل صورة
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* Uploaded Images Grid */}
-                  {formData.images.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                      {formData.images.map((image, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={image.imageUrl}
-                            alt={`Product image ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-xl border-2 border-pink-200"
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-xl flex items-center justify-center">
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                          <div className="absolute top-2 right-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-full">
-                            {index + 1}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {formData.images.length === 0 && (
-                    <div className="text-center py-8 text-pink-600">
-                      📷 لم يتم رفع أي صور بعد
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Basic Information */}
