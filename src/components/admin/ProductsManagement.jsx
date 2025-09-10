@@ -481,13 +481,20 @@ const ProductsManagement = () => {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+            {/* Debug: Check if component is rendering */}
+            {console.log('🎯 Dialog content rendering, images array:', formData.images)}
             <DialogHeader>
               <DialogTitle>إضافة منتج جديد</DialogTitle>
               <DialogDescription>أدخل تفاصيل المنتج</DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
+              {/* DEBUG: This should be visible */}
+              <div style={{background: 'red', color: 'white', padding: '10px', margin: '10px 0', border: '2px solid black'}}>
+                🔴 DEBUG: Image Upload Section Should Be Here
+              </div>
+
               {/* Images Upload - Moved to top for visibility */}
-              <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-6 rounded-2xl border-4 border-pink-300">
+              <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-6 rounded-2xl border-4 border-pink-300" style={{border: '6px solid #ec4899', background: '#fdf2f8'}}>
                 <div className="bg-pink-200 text-pink-800 px-4 py-2 rounded-lg mb-4 text-center font-bold">
                   🎯 يمكنك رفع الصور أولاً ثم إدخال باقي التفاصيل
                 </div>
