@@ -685,6 +685,7 @@ const ProductsManagement = () => {
             فحص الصور المفقودة
           </Button>
           <Button
+            data-add-product
             onClick={() => {
               setEditingProduct(null);
               resetForm();

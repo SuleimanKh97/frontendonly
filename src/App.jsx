@@ -659,7 +659,7 @@ ${customerData.customerName}`
 
         <Route path="/dashboard" element={
           <>
-            <Dashboard />
+            <AdminPanel currentUser={currentUser} onClose={() => navigate('/')} />
             <Footer />
           </>
         } />

@@ -291,7 +291,11 @@ export default function AuthorsManagement() {
           <h2 className="text-4xl font-bold text-transparent bg-gradient-to-r from-black to-amber-900 bg-clip-text">✍️ إدارة المؤلفين</h2>
           <p className="text-2xl text-amber-800 font-medium">👥 إضافة وتعديل وحذف المؤلفين</p>
         </div>
-        <Button onClick={() => setShowAddDialog(true)} className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-bold border-2 border-green-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3 text-lg">
+        <Button
+          data-add-author
+          onClick={() => setShowAddDialog(true)}
+          className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-bold border-2 border-green-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3 text-lg"
+        >
           <Plus className="h-5 w-5 ml-2" />
           ➕ إضافة مؤلف جديد
         </Button>

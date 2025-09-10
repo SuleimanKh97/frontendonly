@@ -810,43 +810,43 @@ class ApiService {
 
   // Analytics endpoints
   async getOverview() {
-    return await this.apiCall('/api/Analytics/overview');
+    return await this.apiCall('/Analytics/overview');
   }
 
   async getProductsByCategory() {
-    return await this.apiCall('/api/Analytics/products-by-category');
+    return await this.apiCall('/Analytics/products-by-category');
   }
 
   async getProductsByType() {
-    return await this.apiCall('/api/Analytics/products-by-type');
+    return await this.apiCall('/Analytics/products-by-type');
   }
 
   async getProductsByLanguage() {
-    return await this.apiCall('/api/Analytics/products-by-language');
+    return await this.apiCall('/Analytics/products-by-language');
   }
 
   async getStockStatus() {
-    return await this.apiCall('/api/Analytics/stock-status');
+    return await this.apiCall('/Analytics/stock-status');
   }
 
   async getFeaturedProducts() {
-    return await this.apiCall('/api/Analytics/featured-products');
+    return await this.apiCall('/Analytics/featured-products');
   }
 
   async getRecentActivity() {
-    return await this.apiCall('/api/Analytics/recent-activity');
+    return await this.apiCall('/Analytics/recent-activity');
   }
 
   async getGradeDistribution() {
-    return await this.apiCall('/api/Analytics/grade-distribution');
+    return await this.apiCall('/Analytics/grade-distribution');
   }
 
   async getSubjectDistribution() {
-    return await this.apiCall('/api/Analytics/subject-distribution');
+    return await this.apiCall('/Analytics/subject-distribution');
   }
 
   async getPriceRanges() {
-    return await this.apiCall('/api/Analytics/price-ranges');
+    return await this.apiCall('/Analytics/price-ranges');
   }
 }
 
