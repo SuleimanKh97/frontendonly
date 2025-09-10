@@ -478,6 +478,14 @@ const ProductsManagement = () => {
 
   const openEditDialog = (product) => {
     setEditingProduct(product);
+    const mappedImages = product.images ? product.images.map(img => ({
+      id: img.id,
+      imageUrl: img.imageUrl,
+      imageType: img.imageType || 'Gallery',
+      displayOrder: img.displayOrder || 0,
+      isActive: img.isActive !== undefined ? img.isActive : true
+    })) : [];
+
     setFormData({
       title: product.title || '',
       titleArabic: product.titleArabic || '',
@@ -497,17 +505,12 @@ const ProductsManagement = () => {
       originalPrice: product.originalPrice || null,
       stockQuantity: product.stockQuantity || 0,
       coverImageUrl: product.coverImageUrl || '',
-      images: product.productImages ? product.productImages.map(img => ({
-        id: img.id,
-        imageUrl: img.imageUrl,
-        imageType: img.imageType,
-        displayOrder: img.displayOrder,
-        isActive: img.isActive
-      })) : [],
+      images: mappedImages,
       isAvailable: product.isAvailable !== undefined ? product.isAvailable : true,
       isFeatured: product.isFeatured !== undefined ? product.isFeatured : false,
       isNewRelease: product.isNewRelease !== undefined ? product.isNewRelease : false
     });
+
     setShowCreateDialog(true); // Open the dialog for editing
   };
 
