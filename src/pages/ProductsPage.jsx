@@ -105,12 +105,27 @@ const ProductsPage = ({ onBack }) => {
   };
 
   const getProductImage = (product) => {
+    console.log('getProductImage called for product:', product.id);
+    console.log('coverImageUrl:', product.coverImageUrl);
+    console.log('images array:', product.images);
+    console.log('productImages array:', product.productImages);
+
     if (product.coverImageUrl) {
-      return fixImageUrl(product.coverImageUrl);
+      const fixedUrl = fixImageUrl(product.coverImageUrl);
+      console.log('Using coverImageUrl:', fixedUrl);
+      return fixedUrl;
+    }
+    if (product.images && product.images.length > 0) {
+      const fixedUrl = fixImageUrl(product.images[0].imageUrl);
+      console.log('Using images[0]:', fixedUrl);
+      return fixedUrl;
     }
     if (product.productImages && product.productImages.length > 0) {
-      return fixImageUrl(product.productImages[0].imageUrl);
+      const fixedUrl = fixImageUrl(product.productImages[0].imageUrl);
+      console.log('Using productImages[0]:', fixedUrl);
+      return fixedUrl;
     }
+    console.log('Using placeholder');
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=منتج';
   };
 
