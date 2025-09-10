@@ -420,6 +420,12 @@ const ProductsManagement = () => {
       };
 
 
+      console.log('🔄 Updating product with data:', productData);
+      console.log('🔄 Product ID:', editingProduct.id);
+      console.log('🔄 Title:', productData.title);
+      console.log('🔄 TitleArabic:', productData.titleArabic);
+      console.log('🔄 Images count:', productData.images?.length || 0);
+
       const result = await apiService.updateProduct(editingProduct.id, productData);
 
       showSuccess('تم تحديث المنتج بنجاح');
