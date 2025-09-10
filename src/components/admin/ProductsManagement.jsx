@@ -45,6 +45,13 @@ const ProductsManagement = () => {
     isAvailable: true
   });
 
+  // Missing images state
+  const [showMissingImagesDialog, setShowMissingImagesDialog] = useState(false);
+  const [missingImagesProducts, setMissingImagesProducts] = useState([]);
+  const [loadingMissingImages, setLoadingMissingImages] = useState(false);
+  const [selectedProductsForUpload, setSelectedProductsForUpload] = useState(new Set());
+  const [productsWithMissingImages, setProductsWithMissingImages] = useState(new Set());
+
   const [formData, setFormData] = useState({
     title: '',
     titleArabic: '',
@@ -86,9 +93,26 @@ const ProductsManagement = () => {
       const apiFilters = { ...filters };
       if (apiFilters.productType === 'all') delete apiFilters.productType;
       if (apiFilters.category === 'all') delete apiFilters.category;
-      
+
       const response = await apiService.getProducts(apiFilters);
       setProducts(response || []);
+
+      // Check for missing images in loaded products
+      if (response && response.length > 0) {
+        const productsWithMissing = new Set();
+        for (const product of response) {
+          try {
+            if (await hasMissingImages(product)) {
+              productsWithMissing.add(product.id);
+            }
+          } catch (error) {
+            console.error(`Error checking images for product ${product.id}:`, error);
+            // If we can't check, assume it might have missing images
+            productsWithMissing.add(product.id);
+          }
+        }
+        setProductsWithMissingImages(productsWithMissing);
+      }
     } catch (error) {
       console.error('Error loading products:', error);
       showError('فشل في تحميل المنتجات');
@@ -149,6 +173,139 @@ const ProductsManagement = () => {
     } catch (error) {
       console.error('Error loading subjects:', error);
     }
+  };
+
+  // Missing Images Functions
+  const loadMissingImagesProducts = async () => {
+    try {
+      setLoadingMissingImages(true);
+      const response = await apiService.get('/Products/missing-images');
+      setMissingImagesProducts(response.products || []);
+      setShowMissingImagesDialog(true);
+    } catch (error) {
+      console.error('Error loading products with missing images:', error);
+      showError('فشل في تحميل المنتجات التي تحتاج صور');
+    } finally {
+      setLoadingMissingImages(false);
+    }
+  };
+
+  const handleBulkImageUpload = async (files) => {
+    if (selectedProductsForUpload.size === 0) {
+      showWarning('يرجى اختيار منتج واحد على الأقل');
+      return;
+    }
+
+    if (files.length === 0) {
+      showWarning('يرجى اختيار صور للرفع');
+      return;
+    }
+
+    try {
+      // First upload all images
+      const uploadedUrls = [];
+      for (const file of files) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await apiService.uploadImage(formData);
+          if (response.imageUrl) {
+            uploadedUrls.push(response.imageUrl);
+          }
+        } catch (error) {
+          console.error(`Failed to upload image:`, error);
+        }
+      }
+
+      if (uploadedUrls.length === 0) {
+        showError('فشل في رفع أي صورة');
+        return;
+      }
+
+      // Then update all selected products with the uploaded images
+      const updatePromises = Array.from(selectedProductsForUpload).map(async (productId) => {
+        const product = missingImagesProducts.find(p => p.id === productId);
+        if (!product) return;
+
+        try {
+          // Prepare update data - add new images to existing ones
+          const existingImages = product.productImages || [];
+          const newImages = uploadedUrls.map((url, index) => ({
+            imageUrl: url,
+            isCover: index === 0 && existingImages.length === 0 // Set first image as cover if no existing images
+          }));
+
+          const updateData = {
+            ...product,
+            images: [...existingImages, ...newImages]
+          };
+
+          await apiService.updateProduct(productId, updateData);
+          return { productId, success: true };
+        } catch (error) {
+          console.error(`Failed to update product ${product.title}:`, error);
+          return { productId, success: false };
+        }
+      });
+
+      const results = await Promise.all(updatePromises);
+      const successCount = results.filter(r => r.success).length;
+
+      showSuccess(`تم رفع ${uploadedUrls.length} صورة بنجاح لـ ${successCount} منتج`);
+
+      // Refresh data
+      loadMissingImagesProducts();
+      loadProducts();
+      setSelectedProductsForUpload(new Set());
+
+    } catch (error) {
+      console.error('Error in bulk image upload:', error);
+      showError('فشل في رفع الصور');
+    }
+  };
+
+  const toggleProductSelection = (productId) => {
+    const newSelection = new Set(selectedProductsForUpload);
+    if (newSelection.has(productId)) {
+      newSelection.delete(productId);
+    } else {
+      newSelection.add(productId);
+    }
+    setSelectedProductsForUpload(newSelection);
+  };
+
+  // Check if a product has missing images
+  const hasMissingImages = async (product) => {
+    if (!product.coverImageUrl && (!product.productImages || product.productImages.length === 0)) {
+      return true; // No images at all
+    }
+
+    // Check cover image
+    if (product.coverImageUrl) {
+      try {
+        const response = await fetch(product.coverImageUrl, { method: 'HEAD' });
+        if (!response.ok) return true;
+      } catch {
+        return true;
+      }
+    }
+
+    // Check product images
+    if (product.productImages) {
+      for (const image of product.productImages) {
+        if (image.imageUrl) {
+          try {
+            const response = await fetch(image.imageUrl, { method: 'HEAD' });
+            if (!response.ok) return true;
+          } catch {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   };
 
   const handleCreate = async () => {
@@ -491,13 +648,27 @@ const ProductsManagement = () => {
           <h1 className="text-3xl font-bold text-royal-black">إدارة المنتجات</h1>
           <p className="text-royal-black/60">إدارة الكتب والقرطاسية والمواد التعليمية</p>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="bg-royal-gold hover:bg-yellow-500 text-royal-black">
-              <Plus className="w-4 h-4 ml-2" />
-              إضافة منتج جديد
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-3">
+          <Button
+            onClick={loadMissingImagesProducts}
+            variant="outline"
+            className="border-red-300 text-red-700 hover:bg-red-50"
+            disabled={loadingMissingImages}
+          >
+            {loadingMissingImages ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500 mr-2"></div>
+            ) : (
+              <Upload className="w-4 h-4 ml-2" />
+            )}
+            فحص الصور المفقودة
+          </Button>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-royal-gold hover:bg-yellow-500 text-royal-black">
+                <Plus className="w-4 h-4 ml-2" />
+                إضافة منتج جديد
+              </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>إضافة منتج جديد</DialogTitle>
@@ -945,6 +1116,7 @@ const ProductsManagement = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -1049,6 +1221,12 @@ const ProductsManagement = () => {
                 
                 {/* Status Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
+                  {productsWithMissingImages.has(product.id) && (
+                    <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
+                      <Upload className="w-3 h-3 ml-1" />
+                      صور مفقودة
+                    </Badge>
+                  )}
                   {product.isFeatured && (
                     <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">مميز</Badge>
                   )}
@@ -1116,6 +1294,131 @@ const ProductsManagement = () => {
           ))}
         </div>
       )}
+
+      {/* Missing Images Dialog */}
+      <Dialog open={showMissingImagesDialog} onOpenChange={setShowMissingImagesDialog}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-red-500" />
+              منتجات تحتاج صور ({missingImagesProducts.length})
+            </DialogTitle>
+            <DialogDescription>
+              المنتجات التالية لها صور مفقودة أو لا تحتوي على صور. يمكنك رفع صور جديدة لها.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Bulk Upload Section */}
+            <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-lg">
+              <h3 className="text-lg font-bold text-blue-900 mb-3">رفع صور جماعي</h3>
+              <div className="flex gap-4 items-center">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => handleBulkImageUpload(Array.from(e.target.files))}
+                  className="hidden"
+                  id="bulk-image-upload"
+                />
+                <label htmlFor="bulk-image-upload" className="cursor-pointer">
+                  <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                    <Upload className="w-4 h-4 ml-2" />
+                    اختر صور للرفع
+                  </Button>
+                </label>
+                <span className="text-sm text-blue-700">
+                  تم اختيار {selectedProductsForUpload.size} منتج
+                </span>
+                <Button
+                  onClick={() => setSelectedProductsForUpload(new Set())}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700"
+                >
+                  إلغاء الاختيار
+                </Button>
+              </div>
+            </div>
+
+            {/* Products List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {missingImagesProducts.map((product) => (
+                <Card key={product.id} className={`border-2 ${
+                  selectedProductsForUpload.has(product.id)
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200'
+                }`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedProductsForUpload.has(product.id)}
+                        onChange={() => toggleProductSelection(product.id)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-lg truncate">
+                          {product.titleArabic || product.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-2">
+                          SKU: {product.sku} | النوع: {product.productType}
+                        </p>
+
+                        {/* Status Badges */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {product.hasNoImages && (
+                            <Badge variant="destructive" className="text-xs">
+                              لا توجد صور
+                            </Badge>
+                          )}
+                          {product.missingImagesCount > 0 && (
+                            <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
+                              {product.missingImagesCount} صورة مفقودة
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-xs">
+                            {product.totalImages} صورة إجمالي
+                          </Badge>
+                        </div>
+
+                        {/* Broken Image URLs */}
+                        {product.missingImageUrls && product.missingImageUrls.length > 0 && (
+                          <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                            <strong>روابط مكسورة:</strong>
+                            <ul className="mt-1 space-y-1">
+                              {product.missingImageUrls.slice(0, 2).map((url, idx) => (
+                                <li key={idx} className="truncate" title={url}>
+                                  {url.length > 50 ? `${url.substring(0, 50)}...` : url}
+                                </li>
+                              ))}
+                              {product.missingImageUrls.length > 2 && (
+                                <li>... و {product.missingImageUrls.length - 2} روابط أخرى</li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {missingImagesProducts.length === 0 && (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">✅</div>
+                <h3 className="text-lg font-semibold text-green-600 mb-2">
+                  جميع المنتجات تحتوي على صور صحيحة
+                </h3>
+                <p className="text-gray-500">
+                  لا توجد منتجات تحتاج إلى إصلاح صورها
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {!loading && products.length === 0 && (
         <div className="text-center py-8">
