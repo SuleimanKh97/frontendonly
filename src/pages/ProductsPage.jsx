@@ -79,7 +79,8 @@ const ProductsPage = ({ onBack }) => {
   const handleWhatsAppInquiry = async (product) => {
     try {
       const message = `مرحباً، أريد الاستفسار عن المنتج: ${product.titleArabic || product.title}`;
-      const whatsappUrl = `https://wa.me/962790000000?text=${encodeURIComponent(message)}`;
+      const libraryPhone = '+962785462983'; // Correct library WhatsApp number
+      const whatsappUrl = `https://wa.me/${libraryPhone.replace('+', '')}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
       showSuccess('تم فتح WhatsApp للتواصل معنا');
     } catch (error) {
@@ -105,28 +106,68 @@ const ProductsPage = ({ onBack }) => {
   };
 
   const getProductImage = (product) => {
-    console.log('getProductImage called for product:', product.id);
-    console.log('coverImageUrl:', product.coverImageUrl);
-    console.log('images array:', product.images);
-    console.log('productImages array:', product.productImages);
+    console.log('🎯 getProductImage called for product:', product.id, product.titleArabic || product.title);
+    console.log('📸 coverImageUrl:', product.coverImageUrl);
+    console.log('🖼️ Images array:', product.Images);
+    console.log('🔍 images array:', product.images);
+    console.log('📦 productImages array:', product.productImages);
 
     if (product.coverImageUrl) {
+      console.log('✅ Found coverImageUrl, fixing URL...');
       const fixedUrl = fixImageUrl(product.coverImageUrl);
-      console.log('Using coverImageUrl:', fixedUrl);
+      console.log('🔗 Fixed coverImageUrl:', fixedUrl);
+      if (fixedUrl && fixedUrl !== product.coverImageUrl) {
+        console.log('⚠️ URL was modified by fixImageUrl');
+      }
       return fixedUrl;
     }
+
+    if (product.Images && product.Images.length > 0) {
+      console.log('✅ Found Images array with', product.Images.length, 'images');
+      const firstImage = product.Images[0];
+      console.log('🖼️ First image:', firstImage);
+      console.log('🔗 Image URL (camelCase):', firstImage.imageUrl);
+      console.log('🔗 Image URL (PascalCase):', firstImage.ImageUrl);
+      const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
+      console.log('🔗 Selected image URL:', imageUrl);
+      if (!imageUrl) {
+        console.log('❌ Image URL is empty/null');
+        return null;
+      }
+      const fixedUrl = fixImageUrl(imageUrl);
+      console.log('🔗 Fixed image URL:', fixedUrl);
+      return fixedUrl;
+    }
+
     if (product.images && product.images.length > 0) {
-      const fixedUrl = fixImageUrl(product.images[0].imageUrl);
-      console.log('Using images[0]:', fixedUrl);
+      console.log('⚠️ Using fallback: images array');
+      const firstImage = product.images[0];
+      const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
+      if (!imageUrl) {
+        console.log('❌ Fallback image URL is empty/null');
+        return null;
+      }
+      const fixedUrl = fixImageUrl(imageUrl);
+      console.log('🔗 Fixed fallback image URL:', fixedUrl);
       return fixedUrl;
     }
+
     if (product.productImages && product.productImages.length > 0) {
-      const fixedUrl = fixImageUrl(product.productImages[0].imageUrl);
-      console.log('Using productImages[0]:', fixedUrl);
+      console.log('⚠️ Using fallback: productImages array');
+      const firstImage = product.productImages[0];
+      const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
+      if (!imageUrl) {
+        console.log('❌ Fallback image URL is empty/null');
+        return null;
+      }
+      const fixedUrl = fixImageUrl(imageUrl);
+      console.log('🔗 Fixed fallback image URL:', fixedUrl);
       return fixedUrl;
     }
-    console.log('Using placeholder');
-    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=منتج';
+
+    console.log('❌ No images found, using placeholder');
+    // Use a data URL placeholder that works offline
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
   };
 
   return (
@@ -155,7 +196,7 @@ const ProductsPage = ({ onBack }) => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="w-4 h-4" />
-                <span>962790000000</span>
+                <span>+962785462983</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Mail className="w-4 h-4" />
@@ -255,12 +296,18 @@ const ProductsPage = ({ onBack }) => {
                   {/* Product Image */}
                   <div className="aspect-[3/4] overflow-hidden">
                     <img
-                      src={getProductImage(product)}
+                      src={getProductImage(product) || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+'}
                       alt={product.titleArabic || product.title}
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=منتج';
+                        console.error('❌ Image failed to load for product:', product.id);
+                        // Prevent infinite loop by checking if we're already using the placeholder
+                        if (!e.target.src.includes('data:image/svg+xml')) {
+                          console.log('🔄 Setting placeholder image due to error');
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
+                        }
                       }}
+                      onLoad={() => console.log('✅ Image loaded successfully for product:', product.id)}
                     />
                   </div>
                   

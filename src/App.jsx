@@ -60,7 +60,8 @@ function BookCard({ book, onWhatsAppInquiry }) {
     if (book.images && book.images.length > 0) {
       return fixImageUrl(book.images[0].imageUrl)
     }
-    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=كتاب'
+    // Use a data URL placeholder that works offline
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPtij2YTYudinINin2YTYqSk8L3RleHQ+PC9zdmc+'
   }
 
   const handleImageError = (event) => {

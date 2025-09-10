@@ -479,7 +479,8 @@ const ProductsManagement = () => {
       return fixedUrl;
     }
     console.log('Using placeholder');
-    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=منتج';
+    // Use a data URL placeholder that works offline
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
   };
 
   return (
@@ -537,7 +538,10 @@ const ProductsManagement = () => {
                             }`}
                             onError={(e) => {
                               console.error('Image failed to load:', image.imageUrl);
-                              e.target.src = 'https://via.placeholder.com/150x100/f0f0f0/666?text=Image+Error';
+                              // Prevent infinite loop by checking if we're already using the placeholder
+                              if (!e.target.src.includes('data:image/svg+xml')) {
+                                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIEVycm9yPC90ZXh0Pjwvc3ZnPg==';
+                              }
                             }}
                             onLoad={() => console.log('Image loaded successfully:', image.imageUrl)}
                           />
@@ -1027,7 +1031,10 @@ const ProductsManagement = () => {
                     alt={product.titleArabic || product.title}
                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=منتج';
+                      // Prevent infinite loop by checking if we're already using the placeholder
+                      if (!e.target.src.includes('data:image/svg+xml')) {
+                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
+                      }
                     }}
                   />
                 </div>
