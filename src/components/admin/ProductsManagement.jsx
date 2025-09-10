@@ -50,16 +50,16 @@ const ProductsManagement = () => {
     description: '',
     descriptionArabic: '',
     productType: 'Book',
-    authorId: '',
-    publisherId: '',
-    categoryId: '',
+    authorId: null,
+    publisherId: null,
+    categoryId: null,
     grade: '',
     subject: '',
-    publicationDate: '',
-    pages: '',
+    publicationDate: null,
+    pages: null,
     language: 'Arabic',
-    price: 0,
-    originalPrice: 0,
+    price: null,
+    originalPrice: null,
     stockQuantity: 0,
     coverImageUrl: '',
     isAvailable: true,
@@ -150,27 +150,119 @@ const ProductsManagement = () => {
 
   const handleCreate = async () => {
     try {
-      await apiService.createProduct(formData);
+      // Helper function to safely parse integers
+      const safeParseInt = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        const parsed = parseInt(value);
+        return isNaN(parsed) ? null : parsed;
+      };
+
+      // Helper function to safely parse floats
+      const safeParseFloat = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? null : parsed;
+      };
+
+      // Prepare data with proper type conversion
+      const productData = {
+        title: formData.title || '',
+        titleArabic: formData.titleArabic || null,
+        sku: formData.sku || null,
+        description: formData.description || null,
+        descriptionArabic: formData.descriptionArabic || null,
+        productType: formData.productType || 'Book',
+        authorId: safeParseInt(formData.authorId),
+        publisherId: safeParseInt(formData.publisherId),
+        categoryId: safeParseInt(formData.categoryId),
+        grade: formData.grade || null,
+        subject: formData.subject || null,
+        publicationDate: formData.publicationDate || null,
+        pages: safeParseInt(formData.pages),
+        language: formData.language || 'Arabic',
+        price: safeParseFloat(formData.price),
+        originalPrice: safeParseFloat(formData.originalPrice),
+        stockQuantity: safeParseInt(formData.stockQuantity) || 0,
+        coverImageUrl: formData.coverImageUrl || null,
+        isAvailable: formData.isAvailable !== undefined ? formData.isAvailable : true,
+        isFeatured: formData.isFeatured !== undefined ? formData.isFeatured : false,
+        isNewRelease: formData.isNewRelease !== undefined ? formData.isNewRelease : false
+      };
+
+      console.log('Sending product data:', productData);
+
+      await apiService.createProduct(productData);
       showSuccess('تم إنشاء المنتج بنجاح');
       setShowCreateDialog(false);
       resetForm();
       loadProducts();
     } catch (error) {
       console.error('Error creating product:', error);
-      showError('فشل في إنشاء المنتج');
+      if (error.response?.data?.errors) {
+        console.error('Validation errors:', error.response.data.errors);
+        showError(`فشل في إنشاء المنتج: ${JSON.stringify(error.response.data.errors)}`);
+      } else {
+        showError('فشل في إنشاء المنتج');
+      }
     }
   };
 
   const handleUpdate = async () => {
     try {
-      await apiService.updateProduct(editingProduct.id, formData);
+      // Helper function to safely parse integers
+      const safeParseInt = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        const parsed = parseInt(value);
+        return isNaN(parsed) ? null : parsed;
+      };
+
+      // Helper function to safely parse floats
+      const safeParseFloat = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? null : parsed;
+      };
+
+      // Prepare data with proper type conversion
+      const productData = {
+        title: formData.title || '',
+        titleArabic: formData.titleArabic || null,
+        sku: formData.sku || null,
+        description: formData.description || null,
+        descriptionArabic: formData.descriptionArabic || null,
+        productType: formData.productType || 'Book',
+        authorId: safeParseInt(formData.authorId),
+        publisherId: safeParseInt(formData.publisherId),
+        categoryId: safeParseInt(formData.categoryId),
+        grade: formData.grade || null,
+        subject: formData.subject || null,
+        publicationDate: formData.publicationDate || null,
+        pages: safeParseInt(formData.pages),
+        language: formData.language || 'Arabic',
+        price: safeParseFloat(formData.price),
+        originalPrice: safeParseFloat(formData.originalPrice),
+        stockQuantity: safeParseInt(formData.stockQuantity) || 0,
+        coverImageUrl: formData.coverImageUrl || null,
+        isAvailable: formData.isAvailable !== undefined ? formData.isAvailable : true,
+        isFeatured: formData.isFeatured !== undefined ? formData.isFeatured : false,
+        isNewRelease: formData.isNewRelease !== undefined ? formData.isNewRelease : false
+      };
+
+      console.log('Updating product data:', productData);
+
+      await apiService.updateProduct(editingProduct.id, productData);
       showSuccess('تم تحديث المنتج بنجاح');
       setEditingProduct(null);
       resetForm();
       loadProducts();
     } catch (error) {
       console.error('Error updating product:', error);
-      showError('فشل في تحديث المنتج');
+      if (error.response?.data?.errors) {
+        console.error('Validation errors:', error.response.data.errors);
+        showError(`فشل في تحديث المنتج: ${JSON.stringify(error.response.data.errors)}`);
+      } else {
+        showError('فشل في تحديث المنتج');
+      }
     }
   };
 
@@ -195,16 +287,16 @@ const ProductsManagement = () => {
       description: '',
       descriptionArabic: '',
       productType: 'Book',
-      authorId: '',
-      publisherId: '',
-      categoryId: '',
+      authorId: null,
+      publisherId: null,
+      categoryId: null,
       grade: '',
       subject: '',
-      publicationDate: '',
-      pages: '',
+      publicationDate: null,
+      pages: null,
       language: 'Arabic',
-      price: 0,
-      originalPrice: 0,
+      price: null,
+      originalPrice: null,
       stockQuantity: 0,
       coverImageUrl: '',
       isAvailable: true,
@@ -222,21 +314,21 @@ const ProductsManagement = () => {
       description: product.description || '',
       descriptionArabic: product.descriptionArabic || '',
       productType: product.productType || 'Book',
-      authorId: product.authorId || '',
-      publisherId: product.publisherId || '',
-      categoryId: product.categoryId || '',
+      authorId: product.authorId || null,
+      publisherId: product.publisherId || null,
+      categoryId: product.categoryId || null,
       grade: product.grade || '',
       subject: product.subject || '',
-      publicationDate: product.publicationDate || '',
-      pages: product.pages || '',
+      publicationDate: product.publicationDate || null,
+      pages: product.pages || null,
       language: product.language || 'Arabic',
-      price: product.price || 0,
-      originalPrice: product.originalPrice || 0,
+      price: product.price || null,
+      originalPrice: product.originalPrice || null,
       stockQuantity: product.stockQuantity || 0,
       coverImageUrl: product.coverImageUrl || '',
       isAvailable: product.isAvailable !== undefined ? product.isAvailable : true,
-      isFeatured: product.isFeatured || false,
-      isNewRelease: product.isNewRelease || false
+      isFeatured: product.isFeatured !== undefined ? product.isFeatured : false,
+      isNewRelease: product.isNewRelease !== undefined ? product.isNewRelease : false
     });
   };
 
@@ -475,7 +567,7 @@ const ProductsManagement = () => {
                       <Label className="flex items-center gap-2 text-lg font-bold text-green-800">
                         ✍️ المؤلف
                       </Label>
-                      <Select value={formData.authorId} onValueChange={(value) => setFormData({...formData, authorId: value})}>
+                      <Select value={formData.authorId ? formData.authorId.toString() : ''} onValueChange={(value) => setFormData({...formData, authorId: value === '' ? null : value})}>
                         <SelectTrigger className="text-lg p-4 border-2 border-green-300 focus:border-green-500 rounded-xl bg-green-50 focus:bg-white">
                           <SelectValue placeholder="اختر المؤلف" />
                         </SelectTrigger>
@@ -495,7 +587,7 @@ const ProductsManagement = () => {
                       <Label className="flex items-center gap-2 text-lg font-bold text-green-800">
                         🏢 الناشر
                       </Label>
-                      <Select value={formData.publisherId} onValueChange={(value) => setFormData({...formData, publisherId: value})}>
+                      <Select value={formData.publisherId ? formData.publisherId.toString() : ''} onValueChange={(value) => setFormData({...formData, publisherId: value === '' ? null : value})}>
                         <SelectTrigger className="text-lg p-4 border-2 border-green-300 focus:border-green-500 rounded-xl bg-green-50 focus:bg-white">
                           <SelectValue placeholder="اختر الناشر" />
                         </SelectTrigger>
@@ -514,7 +606,7 @@ const ProductsManagement = () => {
                     <Label className="flex items-center gap-2 text-lg font-bold text-green-800">
                       🏷️ التصنيف *
                     </Label>
-                    <Select value={formData.categoryId} onValueChange={(value) => setFormData({...formData, categoryId: value})}>
+                    <Select value={formData.categoryId ? formData.categoryId.toString() : ''} onValueChange={(value) => setFormData({...formData, categoryId: value === '' ? null : value})}>
                       <SelectTrigger className="text-lg p-4 border-2 border-green-300 focus:border-green-500 rounded-xl bg-green-50 focus:bg-white">
                         <SelectValue placeholder="اختر التصنيف" />
                       </SelectTrigger>
