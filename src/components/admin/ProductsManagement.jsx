@@ -416,10 +416,18 @@ const ProductsManagement = () => {
       }
 
       // Update form data with new images
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...uploadedImages]
-      }));
+      setFormData(prev => {
+        const updatedImages = [...prev.images, ...uploadedImages];
+
+        // If no cover image is set, automatically set the first image as cover
+        const newCoverImageUrl = prev.coverImageUrl || (uploadedImages.length > 0 ? uploadedImages[0].imageUrl : null);
+
+        return {
+          ...prev,
+          images: updatedImages,
+          coverImageUrl: newCoverImageUrl
+        };
+      });
 
       if (uploadedImages.length > 0) {
         showSuccess(`تم رفع ${uploadedImages.length} صورة بنجاح`);
@@ -450,12 +458,27 @@ const ProductsManagement = () => {
   };
 
   const getProductImage = (product) => {
+    console.log('getProductImage called for product:', product.id);
+    console.log('coverImageUrl:', product.coverImageUrl);
+    console.log('images array:', product.images);
+    console.log('productImages array:', product.productImages);
+
     if (product.coverImageUrl) {
-      return fixImageUrl(product.coverImageUrl);
+      const fixedUrl = fixImageUrl(product.coverImageUrl);
+      console.log('Using coverImageUrl:', fixedUrl);
+      return fixedUrl;
+    }
+    if (product.images && product.images.length > 0) {
+      const fixedUrl = fixImageUrl(product.images[0].imageUrl);
+      console.log('Using images[0]:', fixedUrl);
+      return fixedUrl;
     }
     if (product.productImages && product.productImages.length > 0) {
-      return fixImageUrl(product.productImages[0].imageUrl);
+      const fixedUrl = fixImageUrl(product.productImages[0].imageUrl);
+      console.log('Using productImages[0]:', fixedUrl);
+      return fixedUrl;
     }
+    console.log('Using placeholder');
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=منتج';
   };
 
@@ -507,7 +530,11 @@ const ProductsManagement = () => {
                           <img
                             src={image.imageUrl}
                             alt={`صورة ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border"
+                            className={`w-full h-24 object-cover rounded-lg border ${
+                              formData.coverImageUrl === image.imageUrl
+                                ? 'border-yellow-500 ring-2 ring-yellow-300'
+                                : 'border-gray-300'
+                            }`}
                             onError={(e) => {
                               console.error('Image failed to load:', image.imageUrl);
                               e.target.src = 'https://via.placeholder.com/150x100/f0f0f0/666?text=Image+Error';
@@ -520,9 +547,31 @@ const ProductsManagement = () => {
                           >
                             ✕
                           </button>
+                          <button
+                            onClick={() => setCoverImage(image.imageUrl)}
+                            className={`absolute bottom-1 left-1 rounded-full w-6 h-6 flex items-center justify-center text-sm ${
+                              formData.coverImageUrl === image.imageUrl
+                                ? 'bg-yellow-500 text-white'
+                                : 'bg-gray-500 text-white hover:bg-yellow-400'
+                            }`}
+                            title="تعيين كصورة غلاف"
+                          >
+                            ★
+                          </button>
+                          {formData.coverImageUrl === image.imageUrl && (
+                            <div className="absolute top-1 left-1 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+                              غلاف
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
+                    {formData.coverImageUrl && (
+                      <p className="text-sm text-yellow-700 mt-2 flex items-center gap-2">
+                        <span className="text-yellow-500">★</span>
+                        تم تعيين صورة الغلاف
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

@@ -8,17 +8,20 @@ console.log('🔧 Environment Variable:', import.meta.env.VITE_API_BASE_URL);
 // Helper: Fix image URLs to use Render URL instead of localhost
 function fixImageUrl(imageUrl) {
     if (!imageUrl) return imageUrl;
-    
+
+    console.log('🔧 fixImageUrl called with:', imageUrl);
+
     // Get current API base URL without /api
     const baseUrl = API_BASE_URL.replace('/api', '');
-    
+    console.log('🔧 Base URL for images:', baseUrl);
+
     // Replace localhost:5035 with current Render URL
     if (imageUrl.includes('localhost:5035')) {
         const fixedUrl = imageUrl.replace('http://localhost:5035', baseUrl);
         console.log('🔧 Fixed localhost image URL:', { original: imageUrl, fixed: fixedUrl });
         return fixedUrl;
     }
-    
+
     // If it's a LocalTunnel URL, replace with Render URL
     if (imageUrl.includes('loca.lt')) {
         const path = imageUrl.split('/uploads/')[1];
@@ -28,14 +31,21 @@ function fixImageUrl(imageUrl) {
             return fixedUrl;
         }
     }
-    
+
     // If it's a relative path, make it absolute
     if (imageUrl.startsWith('/uploads/')) {
         const fixedUrl = `${baseUrl}${imageUrl}`;
         console.log('🔧 Fixed relative image URL:', { original: imageUrl, fixed: fixedUrl });
         return fixedUrl;
     }
-    
+
+    // If it's already a Render URL, return as is
+    if (imageUrl.includes('backonly-wuoe.onrender.com')) {
+        console.log('🔧 Image URL already correct:', imageUrl);
+        return imageUrl;
+    }
+
+    console.log('🔧 Returning original image URL:', imageUrl);
     return imageUrl;
 }
 
