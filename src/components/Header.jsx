@@ -104,11 +104,11 @@ const Header = ({ currentUser, onLogout, onOpenAdmin }) => {
                     </span>
                   </div>
                   
-                  {/* Admin Panel Button (if admin) */}
+                  {/* Dashboard Button (if admin) */}
                   {currentUser.role === 'Admin' && (
-                    <Button 
+                    <Button
                       className="bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-sm hover:shadow-md hover-scale hover-glow transition-all duration-300 rounded-lg px-6 py-2 text-sm"
-                      onClick={onOpenAdmin}
+                      onClick={() => navigate('/dashboard')}
                     >
                       <Shield className="w-4 h-4 ml-1" />
                       لوحة التحكم
@@ -210,12 +210,12 @@ const Header = ({ currentUser, onLogout, onOpenAdmin }) => {
                       </span>
                     </div>
                     
-                    {/* Admin Panel Button (if admin) */}
+                    {/* Dashboard Button (if admin) */}
                     {currentUser.role === 'Admin' && (
-                      <Button 
+                      <Button
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md hover-scale hover-glow transition-all duration-300"
                         onClick={() => {
-                          onOpenAdmin();
+                          navigate('/dashboard');
                           setIsMenuOpen(false);
                         }}
                       >

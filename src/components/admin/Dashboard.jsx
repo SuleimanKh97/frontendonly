@@ -1,357 +1,490 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { 
-  Book, 
-  Users, 
-  MessageCircle, 
-  TrendingUp,
-  Eye,
-  Star,
-  ShoppingCart,
-  Calendar,
-  BarChart3,
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   PieChart,
-  Activity
-} from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts'
-import apiService from '../../lib/api.js'
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  Area,
+  AreaChart,
+  ResponsiveContainer
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  BarChart3,
+  PieChart as PieChartIcon,
+  TrendingUp,
+  Package,
+  Users,
+  BookOpen,
+  RefreshCw,
+  Activity,
+  DollarSign,
+  Star,
+  Clock
+} from 'lucide-react';
+import apiService from '@/lib/api';
 
-export default function Dashboard() {
-  const [stats, setStats] = useState({})
-  const [recentBooks, setRecentBooks] = useState([])
-  const [recentInquiries, setRecentInquiries] = useState([])
-  const [loading, setLoading] = useState(true)
+const Dashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [overviewData, setOverviewData] = useState({});
+  const [productsByCategory, setProductsByCategory] = useState([]);
+  const [productsByType, setProductsByType] = useState([]);
+  const [productsByLanguage, setProductsByLanguage] = useState([]);
+  const [stockStatus, setStockStatus] = useState({});
+  const [featuredProducts, setFeaturedProducts] = useState({});
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [gradeDistribution, setGradeDistribution] = useState([]);
+  const [subjectDistribution, setSubjectDistribution] = useState([]);
+  const [priceRanges, setPriceRanges] = useState([]);
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
   useEffect(() => {
-    loadDashboardData()
-  }, [])
+    loadDashboardData();
+  }, []);
 
   const loadDashboardData = async () => {
-    setLoading(true)
     try {
-      const [statsRes, booksRes, inquiriesRes] = await Promise.all([
-        apiService.getDashboardStats(),
-        apiService.getBooks(1, 5),
-        apiService.getBookInquiries(1, 5)
-      ])
+      setLoading(true);
 
-      setStats(statsRes || {})
-      setRecentBooks(booksRes?.items || [])
-      setRecentInquiries(inquiriesRes?.items || [])
+      const [
+        overview,
+        byCategory,
+        byType,
+        byLanguage,
+        stock,
+        featured,
+        recent,
+        grades,
+        subjects,
+        prices
+      ] = await Promise.all([
+        apiService.getOverview(),
+        apiService.getProductsByCategory(),
+        apiService.getProductsByType(),
+        apiService.getProductsByLanguage(),
+        apiService.getStockStatus(),
+        apiService.getFeaturedProducts(),
+        apiService.getRecentActivity(),
+        apiService.getGradeDistribution(),
+        apiService.getSubjectDistribution(),
+        apiService.getPriceRanges()
+      ]);
+
+      setOverviewData(overview);
+      setProductsByCategory(byCategory);
+      setProductsByType(byType);
+      setProductsByLanguage(byLanguage);
+      setStockStatus(stock);
+      setFeaturedProducts(featured);
+      setRecentActivity(recent);
+      setGradeDistribution(grades);
+      setSubjectDistribution(subjects);
+      setPriceRanges(prices);
+
     } catch (error) {
-      console.error('Error loading dashboard data:', error)
+      console.error('Error loading dashboard data:', error);
       // Set mock data for demo
-      setStats({
-        totalBooks: 156,
-        totalAuthors: 89,
+      setOverviewData({
+        totalProducts: 156,
+        availableProducts: 142,
         totalCategories: 12,
-        totalPublishers: 45,
-        newInquiries: 23,
-        activeUsers: 89,
-        monthlySales: 12500,
-        totalViews: 4567,
-        averageRating: 4.2
-      })
+        totalAuthors: 89,
+        totalPublishers: 45
+      });
+      setStockStatus({ inStock: 120, outOfStock: 16, lowStock: 20 });
+      setFeaturedProducts({ featured: 25, newReleases: 18, available: 142 });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const statsData = [
-    {
-      title: 'إجمالي الكتب',
-      value: stats?.totalBooks || 0,
-      icon: Book,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      change: '+12%',
-      changeType: 'positive'
-    },
-    {
-      title: 'الاستفسارات الجديدة',
-      value: stats?.newInquiries || 0,
-      icon: MessageCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-      change: '+8%',
-      changeType: 'positive'
-    },
-    {
-      title: 'المستخدمين النشطين',
-      value: stats?.activeUsers || 0,
-      icon: Users,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      change: '+15%',
-      changeType: 'positive'
-    },
-    {
-      title: 'المبيعات الشهرية',
-      value: stats?.monthlySales ? `${stats.monthlySales} د.أ` : '0 د.أ',
-      icon: TrendingUp,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      change: '+23%',
-      changeType: 'positive'
+  const StatCard = ({ title, value, icon: Icon, color = "blue", subtitle }) => (
+    <Card className="hover:shadow-lg transition-shadow duration-200">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+        <Icon className={`h-4 w-4 text-${color}-600`} />
+      </CardHeader>
+      <CardContent>
+        <div className={`text-2xl font-bold text-${color}-600`}>
+          {loading ? '...' : value}
+        </div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {subtitle}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium">{`${label}`}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }}>
+              {`${entry.dataKey}: ${entry.value}`}
+            </p>
+          ))}
+        </div>
+      );
     }
-  ]
-
-  const chartData = [
-    { name: 'يناير', كتب: 12, استفسارات: 8 },
-    { name: 'فبراير', كتب: 19, استفسارات: 12 },
-    { name: 'مارس', كتب: 15, استفسارات: 10 },
-    { name: 'أبريل', كتب: 22, استفسارات: 15 },
-    { name: 'مايو', كتب: 18, استفسارات: 11 },
-    { name: 'يونيو', كتب: 25, استفسارات: 18 }
-  ]
-
-  const pieData = [
-    { name: 'أدب', value: 35, color: '#3B82F6' },
-    { name: 'علوم', value: 25, color: '#10B981' },
-    { name: 'تاريخ', value: 20, color: '#F59E0B' },
-    { name: 'فلسفة', value: 15, color: '#EF4444' },
-    { name: 'أخرى', value: 5, color: '#8B5CF6' }
-  ]
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ar-SA', {
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+    return null;
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-500 mx-auto mb-6"></div>
-          <p className="text-2xl text-amber-800 font-bold">📊 جاري تحميل لوحة المعلومات...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="space-y-8 bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-2xl" dir="rtl">
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="text-4xl font-bold text-transparent bg-gradient-to-r from-black to-amber-900 bg-clip-text mb-4">📊 لوحة المعلومات</h2>
-        <p className="text-2xl text-amber-800 font-medium">📈 نظرة عامة على أداء المكتبة الرقمية</p>
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">📊 لوحة التحكم</h1>
+          <p className="text-gray-600 mt-2">نظرة شاملة على إحصائيات المنتجات والأداء</p>
+        </div>
+        <Button onClick={loadDashboardData} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          تحديث البيانات
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {statsData.map((stat, index) => (
-          <Card key={index} className="bg-gradient-to-br from-white to-amber-50 border-2 border-amber-300 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl overflow-hidden">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-bold text-amber-800 mb-3">{stat.title}</p>
-                  <p className="text-4xl font-bold text-black mb-3">{stat.value}</p>
-                  <div className="flex items-center">
-                    <TrendingUp className={`h-5 w-5 ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'} ml-2`} />
-                    <span className={`text-lg font-bold ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-                      {stat.change}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg">
-                  <stat.icon className="h-8 w-8 text-black" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Overview Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <StatCard
+          title="إجمالي المنتجات"
+          value={overviewData.totalProducts}
+          icon={Package}
+          color="blue"
+          subtitle="جميع المنتجات في النظام"
+        />
+        <StatCard
+          title="المنتجات المتاحة"
+          value={overviewData.availableProducts}
+          icon={BookOpen}
+          color="green"
+          subtitle="المنتجات المتاحة للبيع"
+        />
+        <StatCard
+          title="التصنيفات"
+          value={overviewData.totalCategories}
+          icon={BarChart3}
+          color="purple"
+          subtitle="عدد التصنيفات المتاحة"
+        />
+        <StatCard
+          title="المؤلفون"
+          value={overviewData.totalAuthors}
+          icon={Users}
+          color="orange"
+          subtitle="عدد المؤلفين المسجلين"
+        />
+        <StatCard
+          title="الناشرون"
+          value={overviewData.totalPublishers}
+          icon={TrendingUp}
+          color="red"
+          subtitle="عدد الناشرين المسجلين"
+        />
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Books vs Inquiries Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart3 className="h-5 w-5 ml-2" />
-              الكتب والاستفسارات الشهرية
-            </CardTitle>
-            <CardDescription>
-              مقارنة بين عدد الكتب المضافة والاستفسارات المستلمة
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="كتب" fill="#3B82F6" />
-                <Bar dataKey="استفسارات" fill="#10B981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="categories" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="categories">📂 التصنيفات</TabsTrigger>
+          <TabsTrigger value="inventory">📦 المخزون</TabsTrigger>
+          <TabsTrigger value="analytics">📈 التحليلات</TabsTrigger>
+          <TabsTrigger value="activity">⚡ النشاط الأخير</TabsTrigger>
+        </TabsList>
 
-        {/* Categories Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <PieChart className="h-5 w-5 ml-2" />
-              توزيع الكتب حسب التصنيف
-            </CardTitle>
-            <CardDescription>
-              نسبة الكتب في كل تصنيف
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsPieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="categories" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Products by Category */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  المنتجات حسب التصنيف
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={productsByCategory}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="category"
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={12}
+                    />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="count" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Books */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Book className="h-5 w-5 ml-2" />
-              أحدث الكتب المضافة
-            </CardTitle>
-            <CardDescription>
-              آخر الكتب التي تم إضافتها للمكتبة
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentBooks.map((book) => (
-                <div key={book.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-12 bg-blue-100 rounded flex items-center justify-center">
-                      <Book className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{book.titleArabic || book.title}</p>
-                      <p className="text-sm text-gray-600">{book.authorNameArabic || book.authorName || book.author?.nameArabic || book.author?.name}</p>
-                    </div>
+            {/* Products by Type */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChartIcon className="h-5 w-5" />
+                  المنتجات حسب النوع
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={productsByType}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                    >
+                      {productsByType.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Products by Language */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                المنتجات حسب اللغة
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={productsByLanguage}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="language" />
+                  <YAxis />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="count" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="inventory" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Stock Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  حالة المخزون
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <span className="text-green-800 font-medium">متوفر</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {stockStatus.inStock || 0}
+                    </Badge>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">{formatDate(book.createdAt)}</p>
-                    <Badge variant={book.isAvailable ? "default" : "secondary"}>
-                      {book.isAvailable ? 'متوفر' : 'غير متوفر'}
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                    <span className="text-yellow-800 font-medium">مخزون منخفض (≤5)</span>
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                      {stockStatus.lowStock || 0}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <span className="text-red-800 font-medium">نفد المخزون</span>
+                    <Badge variant="secondary" className="bg-red-100 text-red-800">
+                      {stockStatus.outOfStock || 0}
                     </Badge>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Recent Inquiries */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MessageCircle className="h-5 w-5 ml-2" />
-              أحدث الاستفسارات
-            </CardTitle>
-            <CardDescription>
-              آخر استفسارات العملاء
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentInquiries.map((inquiry) => (
-                <div key={inquiry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <MessageCircle className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{inquiry.customerName || 'عميل غير محدد'}</p>
-                      <p className="text-sm text-gray-600">
-                        {inquiry.book?.titleArabic || inquiry.book?.title || 'كتاب غير محدد'}
+            {/* Price Ranges */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  توزيع الأسعار
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={priceRanges}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="range" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="count" fill="#ff7300" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Grade Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5" />
+                توزيع الصفوف الدراسية
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={gradeDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="grade" />
+                  <YAxis />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line type="monotone" dataKey="count" stroke="#8884d8" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Featured Products Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5" />
+                  المنتجات المميزة
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {featuredProducts.featured || 0}
+                </div>
+                <p className="text-sm text-muted-foreground">منتجات مميزة</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  الإصدارات الجديدة
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {featuredProducts.newReleases || 0}
+                </div>
+                <p className="text-sm text-muted-foreground">إصدارات جديدة</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  المنتجات المتاحة
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-purple-600">
+                  {featuredProducts.available || 0}
+                </div>
+                <p className="text-sm text-muted-foreground">متاحة للبيع</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Subject Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                أكثر المواد تداولاً
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={subjectDistribution} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="subject" type="category" width={100} fontSize={12} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                آخر المنتجات المضافة
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentActivity.map((product, index) => (
+                  <div key={product.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">
+                        {product.title || product.titleArabic}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        تم إضافته في {new Date(product.createdAt).toLocaleDateString('ar-JO')}
                       </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">{formatDate(inquiry.createdAt)}</p>
-                    <Badge 
-                      variant={
-                        inquiry.status === 'Pending' ? 'secondary' : 
-                        inquiry.status === 'Completed' ? 'default' : 'outline'
-                      }
-                    >
-                      {inquiry.status === 'Pending' ? 'في الانتظار' :
-                       inquiry.status === 'Responded' ? 'تم الرد' :
-                       inquiry.status === 'Completed' ? 'مكتمل' : 'ملغي'}
+                    <Badge variant={product.isAvailable ? "default" : "secondary"}>
+                      {product.isAvailable ? "متاح" : "غير متاح"}
                     </Badge>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Eye className="h-5 w-5 ml-2" />
-              إجمالي المشاهدات
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-600">{stats?.totalViews || 0}</p>
-            <p className="text-sm text-gray-600">مشاهدة للكتب</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Star className="h-5 w-5 ml-2" />
-              متوسط التقييم
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-yellow-600">{stats?.averageRating || 0}</p>
-            <p className="text-sm text-gray-600">من 5 نجوم</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity className="h-5 w-5 ml-2" />
-              النشاط اليومي
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-green-600">{stats?.dailyActivity || 0}</p>
-            <p className="text-sm text-gray-600">تفاعل اليوم</p>
-          </CardContent>
-        </Card>
-      </div>
+                ))}
+                {recentActivity.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    لا توجد منتجات حديثة
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
-  )
-} 
+  );
+};
+
+export default Dashboard; 

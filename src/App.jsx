@@ -26,6 +26,7 @@ import CalendarPage from './pages/CalendarPage.jsx'
 import AdminCalendarPage from './pages/AdminCalendarPage.jsx'
 import SuccessGuidePage from './pages/SuccessGuidePage.jsx'
 import StudyTipsPage from './pages/StudyTipsPage.jsx'
+import Dashboard from './components/admin/Dashboard.jsx'
 import { showSuccess, showError } from './lib/sweetAlert.js'
 
 import apiService from './lib/api.js'
@@ -652,6 +653,13 @@ ${customerData.customerName}`
         <Route path="/study-tips" element={
           <>
             <StudyTipsPage />
+            <Footer />
+          </>
+        } />
+
+        <Route path="/dashboard" element={
+          <>
+            <Dashboard />
             <Footer />
           </>
         } />

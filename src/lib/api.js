@@ -807,6 +807,47 @@ class ApiService {
   async getStudyScheduleGrades() {
     return await this.apiCall('/StudySchedules/grades');
   }
+
+  // Analytics endpoints
+  async getOverview() {
+    return await this.apiCall('/api/Analytics/overview');
+  }
+
+  async getProductsByCategory() {
+    return await this.apiCall('/api/Analytics/products-by-category');
+  }
+
+  async getProductsByType() {
+    return await this.apiCall('/api/Analytics/products-by-type');
+  }
+
+  async getProductsByLanguage() {
+    return await this.apiCall('/api/Analytics/products-by-language');
+  }
+
+  async getStockStatus() {
+    return await this.apiCall('/api/Analytics/stock-status');
+  }
+
+  async getFeaturedProducts() {
+    return await this.apiCall('/api/Analytics/featured-products');
+  }
+
+  async getRecentActivity() {
+    return await this.apiCall('/api/Analytics/recent-activity');
+  }
+
+  async getGradeDistribution() {
+    return await this.apiCall('/api/Analytics/grade-distribution');
+  }
+
+  async getSubjectDistribution() {
+    return await this.apiCall('/api/Analytics/subject-distribution');
+  }
+
+  async getPriceRanges() {
+    return await this.apiCall('/api/Analytics/price-ranges');
+  }
 }
 
 // Create and export a singleton instance
