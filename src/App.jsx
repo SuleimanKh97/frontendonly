@@ -13,6 +13,7 @@ import Hero from './components/Hero.jsx'
 import Footer from './components/Footer.jsx'
 import BooksPage from './pages/BooksPage.jsx'
 import ProductsPage from './pages/ProductsPage.jsx'
+import ProductDetailsPage from './pages/ProductDetailsPage.jsx'
 import AuthorsPage from './pages/AuthorsPage.jsx'
 import CategoriesPage from './pages/CategoriesPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
@@ -550,7 +551,16 @@ ${customerData.customerName}`
             <Footer />
           </>
         } />
-        
+
+        <Route path="/products/:id" element={
+          <>
+            <ProductDetailsPage
+              onBack={handleBackToHome}
+            />
+            <Footer />
+          </>
+        } />
+
         <Route path="/authors" element={
           <>
             <AuthorsPage 

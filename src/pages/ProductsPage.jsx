@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
+import {
+  Search,
   Filter,
   BookOpen,
   PenTool,
@@ -24,6 +25,7 @@ import apiService, { fixImageUrl } from '@/lib/api.js';
 import { showSuccess, showError } from '@/lib/sweetAlert.js';
 
 const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquiry }) => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -623,11 +625,13 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
                         <Phone className="w-4 h-4 ml-2" />
                         استفسار
                       </Button>
-                      <Button 
+                      <Button
                         variant="outline"
                         className="px-4 py-3 border-2 border-amber-300 text-amber-700 hover:bg-amber-50 rounded-xl transition-all duration-300"
+                        onClick={() => navigate(`/products/${item.id}`)}
                       >
                         <Eye className="w-4 h-4" />
+                        التفاصيل
                       </Button>
                     </div>
                   </div>
