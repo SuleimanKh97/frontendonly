@@ -24,8 +24,7 @@ const Header = ({ currentUser, onLogout, onOpenAdmin }) => {
   const navigation = [
     { name: 'الرئيسية', href: '/', icon: BookOpen },
     { name: 'كويزاتك', href: '/quizzes', icon: Circle },
-    { name: 'سوق الطلاب', href: '/books', icon: Book },
-    { name: 'المنتجات', href: '/products', icon: Package },
+    { name: 'سوق الطلاب', href: '/products', icon: Book },
     { name: 'دليل النجاح', href: '/success-guide', icon: Award },
     { name: 'نصائح وإرشادات', href: '/study-tips', icon: Lightbulb },
     { name: 'الرزنامة الطلابية', href: '/calendar', icon: Calendar },

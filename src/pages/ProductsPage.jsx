@@ -23,33 +23,145 @@ import {
 import apiService, { fixImageUrl } from '@/lib/api.js';
 import { showSuccess, showError } from '@/lib/sweetAlert.js';
 
-const ProductsPage = ({ onBack }) => {
+const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquiry }) => {
   const [products, setProducts] = useState([]);
+  const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [categories, setCategories] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
+  const [authors, setAuthors] = useState([]);
+  const [allItems, setAllItems] = useState([]);
   const [filters, setFilters] = useState({
-    productType: '',
-    category: '',
+    productType: 'all',
+    category: 'all',
+    author: 'all',
     search: '',
-    isAvailable: true
+    isAvailable: true,
+    itemType: 'all' // 'all', 'books', 'products'
   });
 
   useEffect(() => {
+    console.log('Filters changed, reloading data:', filters);
     loadProducts();
+    loadBooks();
     loadCategories();
     loadProductTypes();
+    loadAuthors();
   }, [filters]);
+
+  // Update filters when initialCategory or initialAuthor props change
+  useEffect(() => {
+    if (initialCategory && initialCategory !== filters.category) {
+      setFilters(prev => ({ ...prev, category: initialCategory }));
+    } else if (!initialCategory && filters.category !== 'all') {
+      setFilters(prev => ({ ...prev, category: 'all' }));
+    }
+  }, [initialCategory]);
+
+  useEffect(() => {
+    if (initialAuthor && initialAuthor !== filters.author) {
+      setFilters(prev => ({ ...prev, author: initialAuthor }));
+    } else if (!initialAuthor && filters.author !== 'all') {
+      setFilters(prev => ({ ...prev, author: 'all' }));
+    }
+  }, [initialAuthor]);
+
+  // Merge and filter items based on itemType
+  useEffect(() => {
+    let combinedItems = [];
+
+    if (filters.itemType === 'all') {
+      // Combine books and products
+      const booksWithType = books.map(book => ({ ...book, itemType: 'book' }));
+      const productsWithType = products.map(product => ({ ...product, itemType: 'product' }));
+      combinedItems = [...booksWithType, ...productsWithType];
+    } else if (filters.itemType === 'books') {
+      combinedItems = books.map(book => ({ ...book, itemType: 'book' }));
+    } else if (filters.itemType === 'products') {
+      combinedItems = products.map(product => ({ ...product, itemType: 'product' }));
+    }
+
+    // Apply additional filters
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      combinedItems = combinedItems.filter(item => {
+        const title = item.titleArabic || item.title || '';
+        const description = item.descriptionArabic || item.description || '';
+        return title.toLowerCase().includes(searchLower) ||
+               description.toLowerCase().includes(searchLower);
+      });
+    }
+
+    if (filters.category && filters.category !== '' && filters.category !== 'all') {
+      combinedItems = combinedItems.filter(item => {
+        if (item.itemType === 'book') {
+          return item.categoryId?.toString() === filters.category;
+        } else {
+          return item.categoryId?.toString() === filters.category;
+        }
+      });
+    }
+
+    if (filters.productType && filters.productType !== '' && filters.productType !== 'all') {
+      combinedItems = combinedItems.filter(item => {
+        if (item.itemType === 'book') {
+          return true; // Books don't have productType filter
+        } else {
+          return item.productType === filters.productType;
+        }
+      });
+    }
+
+    if (filters.author && filters.author !== '' && filters.author !== 'all') {
+      combinedItems = combinedItems.filter(item => {
+        if (item.itemType === 'book') {
+          return item.authorId?.toString() === filters.author;
+        } else {
+          return true; // Products don't have author filter
+        }
+      });
+    }
+
+    if (!filters.isAvailable) {
+      // Show only available items
+      combinedItems = combinedItems.filter(item => {
+        if (item.itemType === 'book') {
+          return item.stockQuantity > 0;
+        } else {
+          return item.stockQuantity > 0;
+        }
+      });
+    }
+
+    setAllItems(combinedItems);
+    console.log('Combined items:', combinedItems.length, 'books:', books.length, 'products:', products.length);
+  }, [books, products, filters]);
+
+  // Update loading state when all data is loaded
+  useEffect(() => {
+    if (books.length >= 0 && products.length >= 0 && categories.length >= 0 && productTypes.length >= 0 && authors.length >= 0) {
+      setDataLoaded(true);
+      setLoading(false);
+    }
+  }, [books, products, categories, productTypes, authors]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
       const apiFilters = { ...filters };
-      if (apiFilters.productType === 'all') delete apiFilters.productType;
-      if (apiFilters.category === 'all') delete apiFilters.category;
-      
+      // Remove filters that shouldn't be sent to the API
+      if (apiFilters.productType === '' || apiFilters.productType === 'all') delete apiFilters.productType;
+      if (apiFilters.category === '' || apiFilters.category === 'all') delete apiFilters.category;
+      if (apiFilters.author === '' || apiFilters.author === 'all') delete apiFilters.author;
+      // Remove itemType as it's not a backend filter
+      delete apiFilters.itemType;
+
+      console.log('Loading products with filters:', apiFilters);
       const response = await apiService.getProducts(apiFilters);
+      console.log('Products response:', response);
       setProducts(response || []);
+      console.log('Products loaded:', (response || []).length);
     } catch (error) {
       console.error('Error loading products:', error);
       showError('فشل في تحميل المنتجات');
@@ -76,9 +188,49 @@ const ProductsPage = ({ onBack }) => {
     }
   };
 
-  const handleWhatsAppInquiry = async (product) => {
+  const loadBooks = async () => {
     try {
-      const message = `مرحباً، أريد الاستفسار عن المنتج: ${product.titleArabic || product.title}`;
+      // Don't send 'all' or empty string values to the API, send null instead
+      const categoryId = filters.category && filters.category !== '' && filters.category !== 'all' ? filters.category : null;
+      const authorId = filters.author && filters.author !== '' && filters.author !== 'all' ? filters.author : null;
+
+      console.log('Loading books with filters:', { categoryId, authorId, search: filters.search, originalFilters: { category: filters.category, author: filters.author } });
+      const response = await apiService.getBooks(1, 100, filters.search || '', categoryId, authorId);
+      console.log('Books response:', response);
+      if (response && response.items) {
+        setBooks(response.items);
+        console.log('Books loaded:', response.items.length);
+      } else {
+        setBooks([]);
+        console.log('No books found');
+      }
+    } catch (error) {
+      console.error('Error loading books:', error);
+      setBooks([]);
+    }
+  };
+
+  const loadAuthors = async () => {
+    try {
+      const response = await apiService.getAuthors();
+      setAuthors(response || []);
+    } catch (error) {
+      console.error('Error loading authors:', error);
+      setAuthors([]);
+    }
+  };
+
+  const handleWhatsAppInquiry = async (item) => {
+    try {
+      // If onWhatsAppInquiry prop is provided, use it (for compatibility with existing functionality)
+      if (onWhatsAppInquiry) {
+        await onWhatsAppInquiry(item);
+        return;
+      }
+
+      // Default WhatsApp message generation
+      const itemType = item.itemType === 'book' ? 'الكتاب' : 'المنتج';
+      const message = `مرحباً، أريد الاستفسار عن ${itemType}: ${item.titleArabic || item.title}`;
       const libraryPhone = '+962785462983'; // Correct library WhatsApp number
       const whatsappUrl = `https://wa.me/${libraryPhone.replace('+', '')}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
@@ -105,64 +257,79 @@ const ProductsPage = ({ onBack }) => {
     return typeObj ? typeObj.label : type;
   };
 
-  const getProductImage = (product) => {
-    console.log('🎯 getProductImage called for product:', product.id, product.titleArabic || product.title);
-    console.log('📸 coverImageUrl:', product.coverImageUrl);
-    console.log('🖼️ Images array:', product.Images);
-    console.log('🔍 images array:', product.images);
-    console.log('📦 productImages array:', product.productImages);
+  const getProductImage = (item) => {
+    console.log('🎯 getProductImage called for item:', item.id, item.titleArabic || item.title, 'Type:', item.itemType);
 
-    if (product.coverImageUrl) {
-      console.log('✅ Found coverImageUrl, fixing URL...');
-      const fixedUrl = fixImageUrl(product.coverImageUrl);
-      console.log('🔗 Fixed coverImageUrl:', fixedUrl);
-      if (fixedUrl && fixedUrl !== product.coverImageUrl) {
-        console.log('⚠️ URL was modified by fixImageUrl');
+    // Handle books differently from products
+    if (item.itemType === 'book') {
+      console.log('📖 Processing book image...');
+      if (item.coverImageUrl) {
+        console.log('✅ Found book coverImageUrl, fixing URL...');
+        const fixedUrl = fixImageUrl(item.coverImageUrl);
+        console.log('🔗 Fixed book coverImageUrl:', fixedUrl);
+        return fixedUrl;
       }
-      return fixedUrl;
-    }
 
-    if (product.Images && product.Images.length > 0) {
-      console.log('✅ Found Images array with', product.Images.length, 'images');
-      const firstImage = product.Images[0];
-      console.log('🖼️ First image:', firstImage);
-      console.log('🔗 Image URL (camelCase):', firstImage.imageUrl);
-      console.log('🔗 Image URL (PascalCase):', firstImage.ImageUrl);
-      const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
-      console.log('🔗 Selected image URL:', imageUrl);
-      if (!imageUrl) {
-        console.log('❌ Image URL is empty/null');
-        return null;
+      if (item.images && item.images.length > 0) {
+        console.log('✅ Found book images array with', item.images.length, 'images');
+        const firstImage = item.images[0];
+        const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
+        if (!imageUrl) {
+          console.log('❌ Book image URL is empty/null');
+          return null;
+        }
+        const fixedUrl = fixImageUrl(imageUrl);
+        console.log('🔗 Fixed book image URL:', fixedUrl);
+        return fixedUrl;
       }
-      const fixedUrl = fixImageUrl(imageUrl);
-      console.log('🔗 Fixed image URL:', fixedUrl);
-      return fixedUrl;
-    }
+    } else {
+      // Handle products
+      console.log('📦 Processing product image...');
+      if (item.coverImageUrl) {
+        console.log('✅ Found product coverImageUrl, fixing URL...');
+        const fixedUrl = fixImageUrl(item.coverImageUrl);
+        console.log('🔗 Fixed product coverImageUrl:', fixedUrl);
+        return fixedUrl;
+      }
 
-    if (product.images && product.images.length > 0) {
-      console.log('⚠️ Using fallback: images array');
-      const firstImage = product.images[0];
-      const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
-      if (!imageUrl) {
-        console.log('❌ Fallback image URL is empty/null');
-        return null;
+      if (item.Images && item.Images.length > 0) {
+        console.log('✅ Found product Images array with', item.Images.length, 'images');
+        const firstImage = item.Images[0];
+        const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
+        if (!imageUrl) {
+          console.log('❌ Product image URL is empty/null');
+          return null;
+        }
+        const fixedUrl = fixImageUrl(imageUrl);
+        console.log('🔗 Fixed product image URL:', fixedUrl);
+        return fixedUrl;
       }
-      const fixedUrl = fixImageUrl(imageUrl);
-      console.log('🔗 Fixed fallback image URL:', fixedUrl);
-      return fixedUrl;
-    }
 
-    if (product.productImages && product.productImages.length > 0) {
-      console.log('⚠️ Using fallback: productImages array');
-      const firstImage = product.productImages[0];
-      const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
-      if (!imageUrl) {
-        console.log('❌ Fallback image URL is empty/null');
-        return null;
+      if (item.images && item.images.length > 0) {
+        console.log('⚠️ Using fallback: images array');
+        const firstImage = item.images[0];
+        const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
+        if (!imageUrl) {
+          console.log('❌ Fallback image URL is empty/null');
+          return null;
+        }
+        const fixedUrl = fixImageUrl(imageUrl);
+        console.log('🔗 Fixed fallback image URL:', fixedUrl);
+        return fixedUrl;
       }
-      const fixedUrl = fixImageUrl(imageUrl);
-      console.log('🔗 Fixed fallback image URL:', fixedUrl);
-      return fixedUrl;
+
+      if (item.productImages && item.productImages.length > 0) {
+        console.log('⚠️ Using fallback: productImages array');
+        const firstImage = item.productImages[0];
+        const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
+        if (!imageUrl) {
+          console.log('❌ Fallback image URL is empty/null');
+          return null;
+        }
+        const fixedUrl = fixImageUrl(imageUrl);
+        console.log('🔗 Fixed fallback image URL:', fixedUrl);
+        return fixedUrl;
+      }
     }
 
     console.log('❌ No images found, using placeholder');
@@ -189,8 +356,8 @@ const ProductsPage = ({ onBack }) => {
                 <Package className="h-8 w-8 text-white" />
               </div>
               <div className="mr-4">
-                <h1 className="text-3xl font-bold text-royal-black">المنتجات</h1>
-                <p className="text-royal-black/60">اكتشف مجموعتنا المتنوعة من الكتب والقرطاسية</p>
+                <h1 className="text-3xl font-bold text-royal-black">سوق الطلاب والمنتجات</h1>
+                <p className="text-royal-black/60">اكتشف مجموعتنا الشاملة من الكتب والقرطاسية والمواد التعليمية</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -218,7 +385,21 @@ const ProductsPage = ({ onBack }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+              {/* Item Type Filter */}
+              <div className="space-y-2">
+                <Label className="text-lg font-semibold text-amber-800">نوع العنصر</Label>
+                <Select value={filters.itemType} onValueChange={(value) => setFilters({...filters, itemType: value})}>
+                  <SelectTrigger className="text-lg p-4 border-2 border-amber-300 focus:border-amber-500 rounded-xl bg-amber-50 focus:bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع العناصر</SelectItem>
+                    <SelectItem value="books">الكتب فقط</SelectItem>
+                    <SelectItem value="products">المنتجات فقط</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label className="text-lg font-semibold text-amber-800">البحث</Label>
                 <div className="relative">
@@ -265,6 +446,23 @@ const ProductsPage = ({ onBack }) => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-lg font-semibold text-amber-800">المؤلف</Label>
+                <Select value={filters.author} onValueChange={(value) => setFilters({...filters, author: value})}>
+                  <SelectTrigger className="text-lg p-4 border-2 border-amber-300 focus:border-amber-500 rounded-xl bg-amber-50 focus:bg-white">
+                    <SelectValue placeholder="جميع المؤلفين" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع المؤلفين</SelectItem>
+                    {authors.map(author => (
+                      <SelectItem key={author.id} value={author.id.toString()}>
+                        {author.nameArabic || author.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
               <div className="space-y-2">
                 <Label className="text-lg font-semibold text-amber-800">الحالة</Label>
@@ -286,45 +484,55 @@ const ProductsPage = ({ onBack }) => {
         {loading ? (
           <div className="text-center py-16">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-royal-gold mx-auto"></div>
-            <p className="mt-6 text-xl text-royal-black/60">جاري تحميل المنتجات...</p>
+            <p className="mt-6 text-xl text-royal-black/60">جاري تحميل العناصر...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {products.map((product) => (
-              <Card key={product.id} className="glass-card hover-lift transition-all duration-500 overflow-hidden border-2 border-amber-200 hover:border-amber-400">
+            {console.log('Rendering allItems:', allItems.length, 'items')}
+            {allItems.map((item) => (
+              <Card key={`${item.itemType}-${item.id}`} className="glass-card hover-lift transition-all duration-500 overflow-hidden border-2 border-amber-200 hover:border-amber-400">
                 <div className="relative">
                   {/* Product Image */}
                   <div className="aspect-[3/4] overflow-hidden">
                     <img
-                      src={getProductImage(product) || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+'}
-                      alt={product.titleArabic || product.title}
+                      src={getProductImage(item) || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+'}
+                      alt={item.titleArabic || item.title}
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                       onError={(e) => {
-                        console.error('❌ Image failed to load for product:', product.id);
+                        console.error('❌ Image failed to load for item:', item.id);
                         // Prevent infinite loop by checking if we're already using the placeholder
                         if (!e.target.src.includes('data:image/svg+xml')) {
                           console.log('🔄 Setting placeholder image due to error');
                           e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
                         }
                       }}
-                      onLoad={() => console.log('✅ Image loaded successfully for product:', product.id)}
+                      onLoad={() => console.log('✅ Image loaded successfully for item:', item.id)}
                     />
                   </div>
                   
-                  {/* Product Type Badge */}
+                  {/* Item Type Badge */}
                   <div className="absolute top-4 right-4">
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-300 flex items-center gap-1">
-                      {getProductTypeIcon(product.productType)}
-                      {getProductTypeLabel(product.productType)}
+                    <Badge className={`flex items-center gap-1 ${item.itemType === 'book' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>
+                      {item.itemType === 'book' ? (
+                        <>
+                          <BookOpen className="w-3 h-3" />
+                          كتاب
+                        </>
+                      ) : (
+                        <>
+                          {getProductTypeIcon(item.productType)}
+                          {getProductTypeLabel(item.productType)}
+                        </>
+                      )}
                     </Badge>
                   </div>
                   
                   {/* Status Badges */}
                   <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    {product.isFeatured && (
+                    {item.isFeatured && (
                       <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">مميز</Badge>
                     )}
-                    {product.isNewRelease && (
+                    {item.isNewRelease && (
                       <Badge className="bg-green-100 text-green-800 border-green-300">جديد</Badge>
                     )}
                   </div>
@@ -335,40 +543,46 @@ const ProductsPage = ({ onBack }) => {
                     {/* Product Title */}
                     <div>
                       <CardTitle className="text-xl font-bold text-royal-black mb-2 line-clamp-2">
-                        {product.titleArabic || product.title}
+                        {item.titleArabic || item.title}
                       </CardTitle>
-                      {product.titleArabic && product.title && (
+                      {item.titleArabic && item.title && (
                         <CardDescription className="text-sm text-gray-600 line-clamp-2">
-                          {product.title}
+                          {item.title}
                         </CardDescription>
                       )}
                     </div>
-                    
+
                     {/* Product Description */}
-                    {(product.descriptionArabic || product.description) && (
+                    {(item.descriptionArabic || item.description) && (
                       <p className="text-sm text-gray-600 line-clamp-3">
-                        {product.descriptionArabic || product.description}
+                        {item.descriptionArabic || item.description}
                       </p>
                     )}
                     
                     {/* Product Details */}
                     <div className="space-y-2">
-                      {product.grade && (
+                      {item.grade && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">الصف:</span>
-                          <span className="text-sm font-semibold">{product.grade}</span>
+                          <span className="text-sm font-semibold">{item.grade}</span>
                         </div>
                       )}
-                      {product.subject && (
+                      {item.subject && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">المادة:</span>
-                          <span className="text-sm font-semibold">{product.subject}</span>
+                          <span className="text-sm font-semibold">{item.subject}</span>
                         </div>
                       )}
-                      {product.language && (
+                      {item.language && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">اللغة:</span>
-                          <span className="text-sm font-semibold">{product.language}</span>
+                          <span className="text-sm font-semibold">{item.language}</span>
+                        </div>
+                      )}
+                      {item.itemType === 'book' && item.authorNameArabic && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">المؤلف:</span>
+                          <span className="text-sm font-semibold">{item.authorNameArabic}</span>
                         </div>
                       )}
                     </div>
@@ -377,15 +591,15 @@ const ProductsPage = ({ onBack }) => {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-semibold">{product.rating || 0}</span>
+                        <span className="text-sm font-semibold">{item.rating || 0}</span>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-royal-gold">
-                          {product.price} د.أ
+                          {item.price} د.أ
                         </div>
-                        {product.originalPrice && product.originalPrice > product.price && (
+                        {item.originalPrice && item.originalPrice > item.price && (
                           <div className="text-sm text-gray-500 line-through">
-                            {product.originalPrice} د.أ
+                            {item.originalPrice} د.أ
                           </div>
                         )}
                       </div>
@@ -394,16 +608,17 @@ const ProductsPage = ({ onBack }) => {
                     {/* Stock Status */}
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">المخزون:</span>
-                      <span className={`text-sm font-semibold ${product.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {product.stockQuantity > 0 ? `${product.stockQuantity} متوفر` : 'غير متوفر'}
+                      <span className={`text-sm font-semibold ${item.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {item.stockQuantity > 0 ? `${item.stockQuantity} متوفر` : 'غير متوفر'}
                       </span>
                     </div>
                     
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-4">
-                      <Button 
-                        onClick={() => handleWhatsAppInquiry(product)}
+                      <Button
+                        onClick={() => handleWhatsAppInquiry(item)}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 hover:scale-105"
+                        disabled={item.stockQuantity <= 0}
                       >
                         <Phone className="w-4 h-4 ml-2" />
                         استفسار
@@ -423,10 +638,10 @@ const ProductsPage = ({ onBack }) => {
         )}
 
         {/* Empty State */}
-        {!loading && products.length === 0 && (
+        {!loading && allItems.length === 0 && (
           <div className="text-center py-16">
             <Package className="w-24 h-24 text-gray-400 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-gray-600 mb-4">لا توجد منتجات</h3>
+            <h3 className="text-2xl font-bold text-gray-600 mb-4">لا توجد عناصر</h3>
             <p className="text-gray-500 text-lg">جرب تغيير الفلاتر أو البحث بكلمات مختلفة</p>
           </div>
         )}

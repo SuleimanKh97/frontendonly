@@ -38,7 +38,7 @@ const Footer = () => {
               {[
                 { name: 'الرئيسية', href: '/' },
                 { name: 'كويزاتك', href: '/quizzes' },
-                { name: 'سوق الطلاب', href: '/books' },
+                { name: 'سوق الطلاب', href: '/products' },
                 { name: 'دليل النجاح', href: '/success-guide' },
                 { name: 'نصائح وإرشادات', href: '/study-tips' },
                 { name: 'الرزنامة الطلابية', href: '/calendar' },

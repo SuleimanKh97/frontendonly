@@ -267,7 +267,7 @@ function App() {
       return 'my-attempts'
     } else if (pathname.startsWith('/quizzes')) {
       return 'quizzes'
-    } else if (pathname.startsWith('/books')) {
+    } else if (pathname.startsWith('/books') || pathname.startsWith('/products')) {
       return 'books'
     } else if (pathname.startsWith('/authors')) {
       return 'authors'
@@ -455,25 +455,21 @@ ${customerData.customerName}`
   }
 
   const handleViewAuthorBooks = (author) => {
-    navigate('/books')
+    navigate('/products')
     setSelectedAuthorForBooks(author.id.toString())
   }
 
   const handleViewCategory = (category) => {
-    navigate('/books')
+    navigate('/products')
     setSelectedCategoryForBooks(category.id.toString())
   }
 
   // Handle search from any page
   const handleGlobalSearch = (term) => {
     if (getCurrentPage() !== 'home') {
-      navigate('/')
+      navigate('/products')
       setSelectedCategoryForBooks('all')
       setSelectedAuthorForBooks('all')
-      // Wait for page change then search
-      setTimeout(() => {
-        handleSearch(term)
-      }, 100)
     } else {
       handleSearch(term)
     }
@@ -482,7 +478,7 @@ ${customerData.customerName}`
   // Scroll to section helper
   const scrollToSection = (sectionId) => {
     if (getCurrentPage() !== 'home') {
-      navigate('/')
+      navigate('/products')
       setSelectedCategoryForBooks('all')
       setSelectedAuthorForBooks('all')
       // Wait for page change then scroll
@@ -533,20 +529,23 @@ ${customerData.customerName}`
         
         <Route path="/books" element={
           <>
-            <BooksPage 
+            <ProductsPage
               onBack={handleBackToHome}
-              onWhatsAppInquiry={handleWhatsAppInquiry}
               initialCategory={selectedCategoryForBooks}
               initialAuthor={selectedAuthorForBooks}
+              onWhatsAppInquiry={handleWhatsAppInquiry}
             />
             <Footer />
           </>
         } />
-        
+
         <Route path="/products" element={
           <>
-            <ProductsPage 
+            <ProductsPage
               onBack={handleBackToHome}
+              initialCategory={selectedCategoryForBooks}
+              initialAuthor={selectedAuthorForBooks}
+              onWhatsAppInquiry={handleWhatsAppInquiry}
             />
             <Footer />
           </>
