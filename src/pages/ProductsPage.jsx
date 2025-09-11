@@ -173,7 +173,7 @@ const ProductsPage = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100" dir="rtl">
       {/* Header */}
-      <header className="bg-white shadow-lg border-b-4 border-royal-gold">
+      <header className="bg-white shadow-lg border-b-4 border-royal-gold hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
