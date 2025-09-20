@@ -42,17 +42,14 @@ const QuizPage = () => {
   const startQuiz = async () => {
     try {
       setLoading(true);
-      console.log('Starting quiz with ID:', quizId);
       
       // First, get the quiz details with questions
       const quizResponse = await apiService.apiCall(`/quizzes/${quizId}`);
-      console.log('Quiz details response:', quizResponse);
       
       // Then start the quiz attempt
       const attemptResponse = await apiService.apiCall(`/quizzes/${quizId}/start`, {
         method: 'POST'
       });
-      console.log('Quiz start response:', attemptResponse);
       
       // Combine quiz data with attempt data
       const quizData = {
@@ -61,9 +58,6 @@ const QuizPage = () => {
         startTime: attemptResponse.startTime
       };
       
-      console.log('Final quiz data:', quizData);
-      console.log('Quiz questions:', quizData.questions);
-      console.log('Questions count:', quizData.questions?.length);
       
       setQuiz(quizData);
       setTimeLeft(quizData.durationMinutes * 60);

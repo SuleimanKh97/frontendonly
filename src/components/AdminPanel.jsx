@@ -57,32 +57,65 @@ export default function AdminPanel({ currentUser, onClose }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadDashboardStats()
-  }, [])
+    // Only load data if user is authenticated
+    if (currentUser && localStorage.getItem('token')) {
+      loadDashboardStats()
+    } else {
+      // Set fallback data immediately if not authenticated
+      setStats({
+        totalBooks: 0,
+        newInquiries: 0,
+        activeUsers: 0,
+        monthlySales: 0
+      })
+      setLoading(false)
+    }
+  }, [currentUser])
 
   const loadDashboardStats = async () => {
     setLoading(true)
     try {
+      // Check if user is authenticated before making API call
+      if (!currentUser || !localStorage.getItem('token')) {
+        // Don't throw error, just use fallback data
+        setStats({
+          totalBooks: 0,
+          newInquiries: 0,
+          activeUsers: 0,
+          monthlySales: 0
+        })
+        return
+      }
+
       const response = await apiService.getDashboardStats()
       setStats(response)
     } catch (error) {
-      console.error('Error loading dashboard stats:', error)
-      // Set mock stats for demo
-      setStats({
-        totalBooks: 156,
-        newInquiries: 23,
-        activeUsers: 89,
-        monthlySales: 12500
-      })
+      // Don't log authentication errors - they're expected when user isn't logged in
+      if (!error.message.includes('401') && !error.message.includes('unauthorized') && !error.message.includes('not authenticated')) {
+        console.error('Error loading dashboard stats:', error)
+      }
+
+      // If unauthorized, show fallback data
+      if (error.message.includes('401') || error.message.includes('unauthorized') || error.message.includes('not authenticated')) {
+        setStats({
+          totalBooks: 0,
+          newInquiries: 0,
+          activeUsers: 0,
+          monthlySales: 0
+        })
+      } else {
+        setStats({
+          totalBooks: 156,
+          newInquiries: 23,
+          activeUsers: 89,
+          monthlySales: 12500
+        })
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  // Debug: Log current user and admin status
-  console.log('AdminPanel - currentUser:', currentUser);
-  console.log('AdminPanel - isAdmin():', apiService.isAdmin());
-  console.log('AdminPanel - user role:', currentUser?.role);
 
   if (!currentUser) {
     return (

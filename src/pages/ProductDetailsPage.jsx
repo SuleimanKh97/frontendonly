@@ -47,7 +47,6 @@ const ProductDetailsPage = ({ onBack }) => {
           return;
         }
       } catch (productError) {
-        console.log('Product not found, trying as book...');
       }
 
       // If not found as product, try as book
@@ -63,7 +62,6 @@ const ProductDetailsPage = ({ onBack }) => {
           }
         }
       } catch (bookError) {
-        console.log('Book not found either');
       }
 
       throw new Error('Product/Book not found');
@@ -153,7 +151,6 @@ const ProductDetailsPage = ({ onBack }) => {
   };
 
   const handleImageError = (event) => {
-    console.log('Image failed to load:', event.target.src);
     event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjIwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7Zhtin2YbYqDwvdGV4dD4KPC9zdmc+';
   };
 

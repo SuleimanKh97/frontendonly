@@ -67,7 +67,6 @@ function BookCard({ book, onWhatsAppInquiry }) {
   }
 
   const handleImageError = (event) => {
-    console.log('Image failed to load:', event.target.src);
     // Set fallback image
     event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI2YwZjBmMCIvPgogIDx0ZXh0IHg9IjE1MCIgeT0iMjAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7Zhtin2YbYqDwvdGV4dD4KPC9zdmc+';
   }
@@ -371,10 +370,10 @@ function App() {
 
   const handleWhatsAppInquiry = async (book) => {
     try {
-      // For demo purposes, use mock customer data
+      // Use customer data for inquiry
       const customerData = {
         customerName: currentUser ? currentUser.firstName + ' ' + (currentUser.lastName || '') : 'زائر',
-        customerPhone: '+962785462983', // Mock phone number
+        customerPhone: '+962785462983', // Default phone number for demo
         customerEmail: currentUser?.email || '',
         bookId: book.id,
         message: `أريد الاستفسار عن كتاب "${book.titleArabic || book.title}"`
@@ -383,9 +382,7 @@ function App() {
       // Try to create inquiry via API
       try {
         const inquiry = await apiService.createBookInquiry(customerData)
-        console.log('Inquiry created:', inquiry)
       } catch (error) {
-        console.log('API not available, using mock WhatsApp URL')
       }
 
       // Generate WhatsApp URL
@@ -452,7 +449,6 @@ ${customerData.customerName}`
 
   const handleViewAuthor = (author) => {
     // TODO: Implement author details modal
-    console.log('View author:', author)
   }
 
   const handleViewAuthorBooks = (author) => {

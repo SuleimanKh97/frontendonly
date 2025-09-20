@@ -42,16 +42,67 @@ export default function InquiriesManagement() {
   })
 
   useEffect(() => {
-    loadInquiries()
+    // Only load data if user has a token
+    const token = localStorage.getItem('token')
+    if (token) {
+      loadInquiries()
+    } else {
+      // Set empty data immediately if not authenticated
+      setInquiries([])
+      setLoading(false)
+    }
   }, [])
 
   const loadInquiries = async () => {
     setLoading(true)
     try {
+      // Check if user is authenticated before making API call
+      const token = localStorage.getItem('token')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      
+      console.log('👤 Current user role:', user.role)
+      console.log('🔐 Token exists:', !!token)
+      console.log('🌐 API Base URL:', apiService.baseURL)
+      
+      if (!token) {
+        // Don't throw error, just use empty list
+        setInquiries([])
+        return
+      }
+
+      console.log('📞 Making API call to get book inquiries...')
       const response = await apiService.getBookInquiries(1, 100)
-      setInquiries(response.items || [])
+      console.log('📥 Book inquiries response received')
+      console.log('📊 Response.items length:', response?.items?.length || 0)
+      console.log('📋 Response structure:', Object.keys(response || {}))
+      
+      // Try different possible response structures
+      if (response.items) {
+        console.log('✅ Using response.items - found', response.items.length, 'inquiries')
+        setInquiries(response.items)
+      } else if (Array.isArray(response)) {
+        console.log('✅ Using response as array - found', response.length, 'inquiries')
+        setInquiries(response)
+      } else if (response.data) {
+        console.log('✅ Using response.data - found', response.data.length, 'inquiries')
+        setInquiries(response.data)
+      } else {
+        console.warn('⚠️ Unexpected response structure for book inquiries:', response)
+        setInquiries([])
+      }
     } catch (error) {
       console.error('Error loading inquiries:', error)
+      console.error('Error message:', error.message)
+      console.error('Error response:', error.response)
+      
+      // If unauthorized, show empty list
+      if (error.message.includes('401') || error.message.includes('unauthorized') || error.message.includes('not authenticated')) {
+        console.log('Authentication error - setting empty list')
+        setInquiries([])
+      } else {
+        console.log('Other error - setting empty list')
+        setInquiries([])
+      }
     } finally {
       setLoading(false)
     }
@@ -232,11 +283,41 @@ export default function InquiriesManagement() {
             />
           </div>
         </div>
+        <Button 
+          onClick={loadInquiries} 
+          disabled={loading}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <div className={loading ? "animate-spin" : ""}>
+            🔄
+          </div>
+          إعادة تحميل
+        </Button>
       </div>
 
       {/* Inquiries List */}
       <div className="space-y-4">
-        {filteredInquiries.map((inquiry) => (
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>جاري تحميل الاستفسارات...</p>
+          </div>
+        ) : filteredInquiries.length === 0 ? (
+          <div className="text-center py-12">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد استفسارات</h3>
+            <p className="text-gray-500 mb-4">
+              {inquiries.length === 0 
+                ? 'لم يتم العثور على أي استفسارات في النظام.' 
+                : 'لم يتم العثور على استفسارات تطابق معايير البحث.'}
+            </p>
+            <p className="text-sm text-gray-400">
+              إجمالي الاستفسارات: {inquiries.length}
+            </p>
+          </div>
+        ) : (
+          filteredInquiries.map((inquiry) => (
           <Card key={inquiry.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
@@ -251,7 +332,7 @@ export default function InquiriesManagement() {
                     <div className="flex items-center gap-4 text-sm">
                       <span className="flex items-center gap-1">
                         <Book className="h-3 w-3" />
-                        {inquiry.book?.titleArabic || inquiry.book?.title || 'كتاب غير محدد'}
+                        {inquiry.bookTitleArabic || inquiry.bookTitle || inquiry.book?.titleArabic || inquiry.book?.title || 'كتاب غير محدد'}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -321,7 +402,8 @@ export default function InquiriesManagement() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Edit Inquiry Dialog */}
@@ -382,11 +464,11 @@ export default function InquiriesManagement() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label className="font-bold">العنوان:</Label>
-                    <p>{selectedInquiry.book?.titleArabic || selectedInquiry.book?.title || 'غير محدد'}</p>
+                    <p>{selectedInquiry.bookTitleArabic || selectedInquiry.bookTitle || selectedInquiry.book?.titleArabic || selectedInquiry.book?.title || 'غير محدد'}</p>
                   </div>
                   <div>
                     <Label className="font-bold">المؤلف:</Label>
-                    <p>{selectedInquiry.book?.author?.nameArabic || selectedInquiry.book?.author?.name || 'غير محدد'}</p>
+                    <p>{selectedInquiry.bookAuthor || selectedInquiry.book?.author?.nameArabic || selectedInquiry.book?.author?.name || 'غير محدد'}</p>
                   </div>
                   <div>
                     <Label className="font-bold">السعر:</Label>

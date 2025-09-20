@@ -44,7 +44,6 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
   });
 
   useEffect(() => {
-    console.log('Filters changed, reloading data:', filters);
     loadProducts();
     loadBooks();
     loadCategories();
@@ -137,7 +136,6 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
     }
 
     setAllItems(combinedItems);
-    console.log('Combined items:', combinedItems.length, 'books:', books.length, 'products:', products.length);
   }, [books, products, filters]);
 
   // Update loading state when all data is loaded
@@ -159,11 +157,8 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
       // Remove itemType as it's not a backend filter
       delete apiFilters.itemType;
 
-      console.log('Loading products with filters:', apiFilters);
       const response = await apiService.getProducts(apiFilters);
-      console.log('Products response:', response);
       setProducts(response || []);
-      console.log('Products loaded:', (response || []).length);
     } catch (error) {
       console.error('Error loading products:', error);
       showError('فشل في تحميل المنتجات');
@@ -196,15 +191,11 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
       const categoryId = filters.category && filters.category !== '' && filters.category !== 'all' ? filters.category : null;
       const authorId = filters.author && filters.author !== '' && filters.author !== 'all' ? filters.author : null;
 
-      console.log('Loading books with filters:', { categoryId, authorId, search: filters.search, originalFilters: { category: filters.category, author: filters.author } });
       const response = await apiService.getBooks(1, 100, filters.search || '', categoryId, authorId);
-      console.log('Books response:', response);
       if (response && response.items) {
         setBooks(response.items);
-        console.log('Books loaded:', response.items.length);
       } else {
         setBooks([]);
-        console.log('No books found');
       }
     } catch (error) {
       console.error('Error loading books:', error);
@@ -260,81 +251,61 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
   };
 
   const getProductImage = (item) => {
-    console.log('🎯 getProductImage called for item:', item.id, item.titleArabic || item.title, 'Type:', item.itemType);
 
     // Handle books differently from products
     if (item.itemType === 'book') {
-      console.log('📖 Processing book image...');
       if (item.coverImageUrl) {
-        console.log('✅ Found book coverImageUrl, fixing URL...');
         const fixedUrl = fixImageUrl(item.coverImageUrl);
-        console.log('🔗 Fixed book coverImageUrl:', fixedUrl);
         return fixedUrl;
       }
 
       if (item.images && item.images.length > 0) {
-        console.log('✅ Found book images array with', item.images.length, 'images');
         const firstImage = item.images[0];
         const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
         if (!imageUrl) {
-          console.log('❌ Book image URL is empty/null');
           return null;
         }
         const fixedUrl = fixImageUrl(imageUrl);
-        console.log('🔗 Fixed book image URL:', fixedUrl);
         return fixedUrl;
       }
     } else {
       // Handle products
-      console.log('📦 Processing product image...');
       if (item.coverImageUrl) {
-        console.log('✅ Found product coverImageUrl, fixing URL...');
         const fixedUrl = fixImageUrl(item.coverImageUrl);
-        console.log('🔗 Fixed product coverImageUrl:', fixedUrl);
         return fixedUrl;
       }
 
       if (item.Images && item.Images.length > 0) {
-        console.log('✅ Found product Images array with', item.Images.length, 'images');
         const firstImage = item.Images[0];
         const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
         if (!imageUrl) {
-          console.log('❌ Product image URL is empty/null');
           return null;
         }
         const fixedUrl = fixImageUrl(imageUrl);
-        console.log('🔗 Fixed product image URL:', fixedUrl);
         return fixedUrl;
       }
 
       if (item.images && item.images.length > 0) {
-        console.log('⚠️ Using fallback: images array');
         const firstImage = item.images[0];
         const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
         if (!imageUrl) {
-          console.log('❌ Fallback image URL is empty/null');
           return null;
         }
         const fixedUrl = fixImageUrl(imageUrl);
-        console.log('🔗 Fixed fallback image URL:', fixedUrl);
         return fixedUrl;
       }
 
       if (item.productImages && item.productImages.length > 0) {
-        console.log('⚠️ Using fallback: productImages array');
         const firstImage = item.productImages[0];
         const imageUrl = firstImage.imageUrl || firstImage.ImageUrl;
         if (!imageUrl) {
-          console.log('❌ Fallback image URL is empty/null');
           return null;
         }
         const fixedUrl = fixImageUrl(imageUrl);
-        console.log('🔗 Fixed fallback image URL:', fixedUrl);
         return fixedUrl;
       }
     }
 
-    console.log('❌ No images found, using placeholder');
     // Use a data URL placeholder that works offline
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
   };
@@ -490,7 +461,6 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {console.log('Rendering allItems:', allItems.length, 'items')}
             {allItems.map((item) => (
               <Card key={`${item.itemType}-${item.id}`} className="glass-card hover-lift transition-all duration-500 overflow-hidden border-2 border-amber-200 hover:border-amber-400">
                 <div className="relative">
@@ -504,11 +474,9 @@ const ProductsPage = ({ onBack, initialCategory, initialAuthor, onWhatsAppInquir
                         console.error('❌ Image failed to load for item:', item.id);
                         // Prevent infinite loop by checking if we're already using the placeholder
                         if (!e.target.src.includes('data:image/svg+xml')) {
-                          console.log('🔄 Setting placeholder image due to error');
                           e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
                         }
                       }}
-                      onLoad={() => console.log('✅ Image loaded successfully for item:', item.id)}
                     />
                   </div>
                   

@@ -252,14 +252,6 @@ export default function LoginPage({ onLoginSuccess }) {
               </Button>
             </form>
 
-            {/* Test Credentials */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-              <p className="text-sm text-gray-600 font-bold mb-2 text-center">للاختبار، استخدم:</p>
-              <div className="text-xs text-gray-500 space-y-1 text-center">
-                <p>البريد الإلكتروني: admin@library.com</p>
-                <p>كلمة المرور: Admin123!</p>
-              </div>
-            </div>
           </CardContent>
 
           <CardFooter className="text-center p-6">

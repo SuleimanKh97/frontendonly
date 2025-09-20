@@ -1,24 +1,18 @@
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://backonly-wuoe.onrender.com/api';
 
-// Debug: Log the API base URL
-console.log('🔧 API Base URL:', API_BASE_URL);
-console.log('🔧 Environment Variable:', import.meta.env.VITE_API_BASE_URL);
 
 // Helper: Fix image URLs to use Render URL instead of localhost
 function fixImageUrl(imageUrl) {
     if (!imageUrl) return imageUrl;
 
-    console.log('🔧 fixImageUrl called with:', imageUrl);
 
     // Get current API base URL without /api
     const baseUrl = API_BASE_URL.replace('/api', '');
-    console.log('🔧 Base URL for images:', baseUrl);
 
     // Replace localhost:5035 with current Render URL
     if (imageUrl.includes('localhost:5035')) {
         const fixedUrl = imageUrl.replace('http://localhost:5035', baseUrl);
-        console.log('🔧 Fixed localhost image URL:', { original: imageUrl, fixed: fixedUrl });
         return fixedUrl;
     }
 
@@ -27,7 +21,6 @@ function fixImageUrl(imageUrl) {
         const path = imageUrl.split('/uploads/')[1];
         if (path) {
             const fixedUrl = `${baseUrl}/uploads/${path}`;
-            console.log('🔧 Fixed LocalTunnel image URL:', { original: imageUrl, fixed: fixedUrl });
             return fixedUrl;
         }
     }
@@ -35,17 +28,14 @@ function fixImageUrl(imageUrl) {
     // If it's a relative path, make it absolute
     if (imageUrl.startsWith('/uploads/')) {
         const fixedUrl = `${baseUrl}${imageUrl}`;
-        console.log('🔧 Fixed relative image URL:', { original: imageUrl, fixed: fixedUrl });
         return fixedUrl;
     }
 
     // If it's already a Render URL, return as is
     if (imageUrl.includes('backonly-wuoe.onrender.com')) {
-        console.log('🔧 Image URL already correct:', imageUrl);
         return imageUrl;
     }
 
-    console.log('🔧 Returning original image URL:', imageUrl);
     return imageUrl;
 }
 
@@ -131,8 +121,6 @@ async function apiCall(endpoint, options = {}) {
         config.body = JSON.stringify(options.body);
     }
 
-    console.log('Making API call to:', url);
-    console.log('Options:', config);
 
     // Retry mechanism for ngrok warning pages
     const maxRetries = 3;
@@ -141,8 +129,6 @@ async function apiCall(endpoint, options = {}) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const response = await fetch(url, config);
-            console.log(`Attempt ${attempt} - Response status:`, response.status);
-            console.log(`Attempt ${attempt} - Response headers:`, Object.fromEntries(response.headers.entries()));
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -150,18 +136,14 @@ async function apiCall(endpoint, options = {}) {
 
             const contentType = response.headers.get('content-type');
             const text = await response.text(); // Read body as text once
-            console.log(`Attempt ${attempt} - Raw response text:`, text.substring(0, 500)); // Log first 500 chars
 
             try {
                 const data = JSON.parse(text);
-                console.log(`Attempt ${attempt} - API call successful, JSON result:`, data);
                 return convertKeysToCamelCase(data);
             } catch (jsonError) {
                 // If JSON parsing fails, check for tunnel warning pages
                 if (text.includes('<!DOCTYPE html>') || text.includes('ngrok') || text.includes('localtunnel')) {
-                    console.log(`Attempt ${attempt} - tunnel warning page detected`);
                     if (attempt < maxRetries) {
-                        console.log(`Waiting 2 seconds before retry ${attempt + 1}...`);
                         await new Promise(resolve => setTimeout(resolve, 2000));
                         continue;
                     } else {
@@ -173,11 +155,9 @@ async function apiCall(endpoint, options = {}) {
                 }
             }
         } catch (error) {
-            console.log(`Attempt ${attempt} - API call error:`, error);
             lastError = error;
             
             if (attempt < maxRetries) {
-                console.log(`Waiting 2 seconds before retry ${attempt + 1}...`);
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
         }
@@ -192,7 +172,6 @@ async function testImageUrl(url) {
         const response = await fetch(url, { method: 'HEAD' });
         return response.ok;
     } catch (error) {
-        console.log('🔧 Image URL test failed:', url, error);
         return false;
     }
 }
@@ -281,32 +260,39 @@ class ApiService {
   // Generic API call method
   async apiCall(endpoint, options = {}) {
     try {
-      console.log(`Making API call to: ${this.baseURL}${endpoint}`)
-      console.log('Options:', options)
       
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         headers: this.getAuthHeaders(),
         ...options
       });
 
-      console.log('Response status:', response.status)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
 
       if (!response.ok) {
         let errorMessage = `API call failed: ${response.status} ${response.statusText}`
-        
+
         try {
-          const errorData = await response.json()
-          console.error('Error response data:', errorData)
-          errorMessage += `\nDetails: ${JSON.stringify(errorData)}`
-        } catch (parseError) {
-          console.error('Could not parse error response as JSON')
           const errorText = await response.text()
-          errorMessage += `\nResponse text: ${errorText}`
+          try {
+            const errorData = JSON.parse(errorText)
+            console.error('Error response data:', errorData)
+            errorMessage += `\nDetails: ${JSON.stringify(errorData)}`
+          } catch (jsonParseError) {
+            console.error('Could not parse error response as JSON')
+            errorMessage += `\nResponse text: ${errorText}`
+          }
+        } catch (textError) {
+          console.error('Could not read error response text')
+          errorMessage += `\nCould not read response body`
+        }
+
+        const error = new Error(errorMessage)
+        error.response = { status: response.status, statusText: response.statusText }
+        
+        // Don't log authentication errors to console
+        if (response.status !== 401) {
+          console.error('API call error:', errorMessage)
         }
         
-        const error = new Error(errorMessage)
-        error.response = response
         throw error
       }
 
@@ -314,15 +300,14 @@ class ApiService {
       if (contentType && contentType.includes('application/json')) {
         const rawResult = await response.json()
         const result = deepCamelize(rawResult)
-        console.log('API call successful, result:', result)
         return result
       }
       
       const result = await response.text()
-      console.log('API call successful, text result:', result)
       return result
     } catch (error) {
-      console.error('API call error:', error)
+      // Don't log authentication errors - they're expected when user isn't logged in
+      // The error logging is already handled in the apiCall method above
       throw error
     }
   }
@@ -338,9 +323,6 @@ class ApiService {
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       
-      // Debug: Log what we're saving
-      console.log('Login - saving user to localStorage:', response.user);
-      console.log('Login - user role:', response.user?.role);
     }
     
     return response;
@@ -360,9 +342,6 @@ class ApiService {
   getCurrentUser() {
     const user = localStorage.getItem('user');
     const parsedUser = user ? JSON.parse(user) : null;
-    console.log('getCurrentUser() - raw user from localStorage:', user);
-    console.log('getCurrentUser() - parsed user:', parsedUser);
-    console.log('getCurrentUser() - user role:', parsedUser?.role);
     return parsedUser;
   }
 
@@ -372,10 +351,7 @@ class ApiService {
 
   isAdmin() {
     const user = this.getCurrentUser();
-    console.log('isAdmin() - user:', user);
-    console.log('isAdmin() - user role:', user?.role);
     const isAdmin = user && (user.role === 'Admin' || user.role === 'Librarian');
-    console.log('isAdmin() - result:', isAdmin);
     return isAdmin;
   }
 
@@ -609,6 +585,14 @@ class ApiService {
       page: page.toString(),
       pageSize: pageSize.toString()
     });
+    
+    // Debug logging for token and headers
+    const token = localStorage.getItem('token');
+    const user = this.getCurrentUser();
+    console.log('🔐 getBookInquiries - Token exists:', !!token);
+    console.log('👤 getBookInquiries - User role:', user?.role);
+    console.log('📤 getBookInquiries - Request URL:', `${this.baseURL}/BookInquiries?${params}`);
+    
     return await this.apiCall(`/BookInquiries?${params}`);
   }
 
@@ -628,29 +612,29 @@ class ApiService {
 
   // Calendar/Schedules Methods
   async getSchedules() {
-    return await this.apiCall('/Schedules');
+    return await this.apiCall('/StudySchedules');
   }
 
   async getSchedule(id) {
-    return await this.apiCall(`/Schedules/${id}`);
+    return await this.apiCall(`/StudySchedules/${id}`);
   }
 
   async createSchedule(scheduleData) {
-    return await this.apiCall('/Schedules', {
+    return await this.apiCall('/StudySchedules', {
       method: 'POST',
       body: JSON.stringify(scheduleData)
     });
   }
 
   async updateSchedule(id, scheduleData) {
-    return await this.apiCall(`/Schedules/${id}`, {
+    return await this.apiCall(`/StudySchedules/${id}`, {
       method: 'PUT',
       body: JSON.stringify(scheduleData)
     });
   }
 
   async deleteSchedule(id) {
-    return await this.apiCall(`/Schedules/${id}`, {
+    return await this.apiCall(`/StudySchedules/${id}`, {
       method: 'DELETE'
     });
   }

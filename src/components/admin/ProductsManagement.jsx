@@ -95,8 +95,6 @@ const ProductsManagement = () => {
       if (apiFilters.category === 'all') delete apiFilters.category;
 
       const response = await apiService.getProducts(apiFilters);
-      console.log('🔄 Refreshing products after update:', response?.length || 0, 'products');
-      console.log('🔄 First product:', response?.[0]);
       setProducts(response || []);
 
       // Check for missing images in loaded products
@@ -424,19 +422,11 @@ const ProductsManagement = () => {
       };
 
 
-      console.log('🔄 Updating product with data:', productData);
-      console.log('🔄 Product ID:', editingProduct.id);
-      console.log('🔄 Title:', productData.title);
-      console.log('🔄 TitleArabic:', productData.titleArabic);
-      console.log('🔄 Images count:', productData.images?.length || 0);
 
-      // Debug: Log image IDs to see if they're included
-      console.log('🔄 Images with IDs:', productData.images.map(img => ({ id: img.id, url: img.imageUrl })));
 
       const result = await apiService.updateProduct(editingProduct.id, productData);
 
       showSuccess('تم تحديث المنتج بنجاح');
-      console.log('✅ Update successful, closing dialog and refreshing...');
 
       // Close the dialog and reset state
       setShowCreateDialog(false);
@@ -583,7 +573,6 @@ const ProductsManagement = () => {
         }
 
         const uploadResult = await uploadResponse.json();
-        console.log('Upload result:', uploadResult);
 
         // Add to uploaded images
         uploadedImages.push({
@@ -637,27 +626,19 @@ const ProductsManagement = () => {
   };
 
   const getProductImage = (product) => {
-    console.log('getProductImage called for product:', product.id);
-    console.log('coverImageUrl:', product.coverImageUrl);
-    console.log('images array:', product.images);
-    console.log('productImages array:', product.productImages);
 
     if (product.coverImageUrl) {
       const fixedUrl = fixImageUrl(product.coverImageUrl);
-      console.log('Using coverImageUrl:', fixedUrl);
       return fixedUrl;
     }
     if (product.images && product.images.length > 0) {
       const fixedUrl = fixImageUrl(product.images[0].imageUrl);
-      console.log('Using images[0]:', fixedUrl);
       return fixedUrl;
     }
     if (product.productImages && product.productImages.length > 0) {
       const fixedUrl = fixImageUrl(product.productImages[0].imageUrl);
-      console.log('Using productImages[0]:', fixedUrl);
       return fixedUrl;
     }
-    console.log('Using placeholder');
     // Use a data URL placeholder that works offline
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1lbnRhaiAo0LHWkdWZ0LHWaSk8L3RleHQ+PC9zdmc+';
   };
@@ -747,7 +728,6 @@ const ProductsManagement = () => {
                                 e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIEVycm9yPC90ZXh0Pjwvc3ZnPg==';
                               }
                             }}
-                            onLoad={() => console.log('Image loaded successfully:', image.imageUrl)}
                           />
                           <button
                             onClick={() => removeImage(index)}

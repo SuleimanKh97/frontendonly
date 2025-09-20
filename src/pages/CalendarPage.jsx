@@ -12,19 +12,30 @@ const CalendarPage = () => {
 
   // Load schedules from API on component mount
   useEffect(() => {
-    const loadSchedules = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await apiService.getSchedules();
-        if (response.success) {
-          setSchedules(response.data || []);
-        } else {
-          setError(response.message || 'حدث خطأ في تحميل الجداول');
-        }
+  const loadSchedules = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiService.getSchedules();
+      if (response && Array.isArray(response)) {
+        setSchedules(response);
+      } else if (response && response.items) {
+        setSchedules(response.items);
+      } else {
+        setSchedules([]);
+      }
       } catch (err) {
         console.error('Error loading schedules:', err);
-        setError('حدث خطأ في الاتصال بالخادم');
+
+        // Handle different error types
+        if (err.message && err.message.includes('404')) {
+          setError('خدمة الجداول غير متوفرة حالياً');
+        } else if (err.message && err.message.includes('401')) {
+          setError('يجب تسجيل الدخول لعرض الجداول');
+        } else {
+          setError('حدث خطأ في الاتصال بالخادم');
+        }
+
         // Fallback to default schedules if API fails
         const defaultSchedules = [
           {

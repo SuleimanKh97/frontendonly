@@ -95,7 +95,6 @@ const Dashboard = () => {
 
     } catch (error) {
       console.error('Error loading dashboard data:', error);
-      // Set mock data for demo
       setOverviewData({
         totalProducts: 156,
         availableProducts: 142,

@@ -60,15 +60,12 @@ const BookForm = ({ formData, handleInputChange, authors, categories, publishers
 
     try {
       const result = await apiService.uploadImage(file)
-      console.log('Upload result:', result)
       
       const imageUrl = result.imageUrl
-      console.log('Image URL:', imageUrl)
       
       // Test if image loads
       try {
         await testImageLoad(imageUrl)
-        console.log('Image loaded successfully:', imageUrl)
         setUploadedImages(prev => [...prev, imageUrl])
         
         // Update cover image if this is the first image
@@ -215,7 +212,6 @@ const BookForm = ({ formData, handleInputChange, authors, categories, publishers
                         alt={`صورة ${index + 1}`}
                         className="w-full h-32 object-cover rounded-lg border-2 border-amber-300"
                         onLoad={() => {
-                          console.log('Image loaded in preview:', imageUrl)
                         }}
                         onError={(e) => {
                           console.error('Error loading image in preview:', imageUrl)
@@ -583,7 +579,6 @@ export default function BooksManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      console.log('Submitting book data:', formData)
       
       // Convert string IDs to numbers for backend
       const submitData = {
@@ -635,18 +630,13 @@ export default function BooksManagement() {
         return
       }
 
-      console.log('Final submit data:', JSON.stringify(submitData, null, 2))
 
       if (selectedBook) {
         // Update existing book
-        console.log('Updating book with ID:', selectedBook.id)
         const updateResult = await apiService.updateBook(selectedBook.id, submitData)
-        console.log('Book updated successfully:', updateResult)
       } else {
         // Create new book
-        console.log('Creating new book')
         const result = await apiService.createBook(submitData)
-        console.log('Book created successfully:', result)
       }
       
       setShowAddDialog(false)
