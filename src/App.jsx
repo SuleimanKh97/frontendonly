@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -495,12 +496,18 @@ ${customerData.customerName}`
 
   // Render different pages
   if (showAdminPanel) {
-    return <AdminPanel currentUser={currentUser} onClose={() => setShowAdminPanel(false)} />
+    return (
+      <>
+        <Analytics />
+        <AdminPanel currentUser={currentUser} onClose={() => setShowAdminPanel(false)} />
+      </>
+    )
   }
 
   return (
     <div className="min-h-screen">
-      <Header 
+      <Analytics />
+      <Header
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenAdmin={() => setShowAdminPanel(true)}
